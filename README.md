@@ -34,7 +34,8 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 
 1. Open the tool → *I'm voting* → paste the round code from the chat.
 2. Pick your own name (it never enters the chip), paste your invite code → **Check in & start
-   ranking**.
+   ranking**. The ranking stays hidden until you click that button; on a phone, clicking it
+   scrolls the board into view.
 3. Drag the bubbles into the rows — the top row is who you want most. Empty "drop here"
    rows show where the next slot lands, and you can stack several people on one row only
    when the organiser allows ties; people sharing a row count as tied, and a bigger row
@@ -49,6 +50,8 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 **Anyone:**
 
 - Open the tool → *See the splits* → paste the results code. No key needed.
+- Every other screen has a **Back to start** button in the header, and the House Sort logo
+  always takes you home too.
 - The viewer also has a **live layout playground**: move beds between houses (or tap a preset
   like *3 + 5*) and the best groupings recompute instantly — no revote. Perfect for "what if we
   do 3 + 5 instead of 4 + 4?"

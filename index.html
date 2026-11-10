@@ -45,7 +45,7 @@
   .brand svg{display:block}
   .brand strong{font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:-.01em}
   .brand span{color:var(--muted); font-size:13.5px}
-  .steps{display:flex; gap:6px; margin-top:18px; flex-wrap:wrap}
+  .steps{display:flex; gap:6px; flex-wrap:wrap}
   .step{
     display:flex; align-items:center; gap:7px; padding:7px 13px; border-radius:999px;
     border:1px solid var(--border); background:var(--surface);
@@ -59,6 +59,18 @@
   .step.done{color:var(--accent)}
   .step.done i{background:var(--accent-soft); color:var(--accent)}
   .step.on i{background:var(--accent); color:#fff}
+  .navrow{display:flex; align-items:center; justify-content:space-between; gap:10px 14px; margin-top:18px; flex-wrap:wrap}
+  .navrow .steps{margin-top:0}
+  .homechip{
+    display:none; align-items:center; gap:6px; cursor:pointer;
+    font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--muted);
+    background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:7px 13px;
+    transition:color .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease), transform .12s var(--ease);
+  }
+  body:not(.at-home) .homechip{display:inline-flex}
+  .homechip:hover{color:var(--accent); border-color:var(--accent); background:var(--accent-soft); transform:translateY(-1px)}
+  .homechip:active{transform:translateY(0)}
+  .homechip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
   /* ── entrance ───────────────────────────────────────── */
   @keyframes enter{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
@@ -79,6 +91,13 @@
   .choice button:active{transform:translateY(0); box-shadow:var(--shadow)}
   .choice .who{display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-weight:600; font-size:16px}
   .choice .who svg{flex:none}
+  .choice .pick{display:inline-flex; align-items:center; margin-bottom:10px; padding:3px 8px 4px;
+    border-radius:999px; background:var(--accent); color:var(--accent-ink);
+    font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase}
+  .choice button.start{border-color:var(--accent); background:linear-gradient(180deg,#F4F8F3,#FFFFFF);
+    box-shadow:0 14px 28px -20px rgba(47,107,79,.75)}
+  .choice button.start .who{color:var(--accent)}
+  .choice button.start .who::after{content:"→"; margin-left:auto; font-size:17px; color:var(--accent)}
   .choice p{margin-top:7px; font-size:13.5px; color:var(--muted)}
   .promise{
     margin-top:26px; display:flex; gap:10px; align-items:flex-start;
@@ -344,17 +363,23 @@
   }
 </style>
 </head>
-<body>
+<body class="at-home">
 <div class="wrap">
   <header>
     <div class="brand" id="brand-home" role="button" tabindex="0" aria-label="Back to the front page" title="Back to the front page">
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2F6B4F"/><path d="M6 16l7-5.6L20 16v7.4a.6.6 0 0 1-.6.6h-3.9v-4.4h-2.4v4.4H6.6a.6.6 0 0 1-.6-.6z" fill="#F6F4EE"/><path d="M20.6 16.4l4.9-3.8 4.9 3.8v5.4c0 .4-.3.7-.7.7h-2.2v-2.9h-2.6v2.9h-2.2c-.4 0-.7-.3-.7-.7z" fill="#F6F4EE" opacity=".82"/></svg>
       <div><strong>House&nbsp;Sort</strong><br><span>Any group, any houses, zero visible votes</span></div>
     </div>
-    <div class="steps" aria-label="How it works">
-      <span class="step" data-step="1"><i>1</i>Set up the vote</span>
-      <span class="step" data-step="2"><i>2</i>Everyone ranks</span>
-      <span class="step" data-step="3"><i>3</i>Splits revealed</span>
+    <div class="navrow">
+      <div class="steps" aria-label="How it works">
+        <span class="step" data-step="1"><i>1</i>Set up the vote</span>
+        <span class="step" data-step="2"><i>2</i>Everyone ranks</span>
+        <span class="step" data-step="3"><i>3</i>Splits revealed</span>
+      </div>
+      <button type="button" class="homechip" data-back aria-label="Back to the start">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+        Back to start
+      </button>
     </div>
   </header>
 
@@ -364,17 +389,18 @@
       <h1 data-enter>Pick the houses without picking fights</h1>
       <p class="lede" data-enter>Everyone ranks the group — strict order, or the tie levels the organiser picked. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
       <div class="choice">
+        <button id="go-vote" type="button" class="start" data-enter>
+          <span class="pick">Start here</span>
+          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16V9l5-4 5 4v7"/><path d="M10 16v-4h4v4"/></svg>I'm here to vote</span>
+          <p>Got a round code from the group chat? Paste it, rank the group, post one encrypted chip.</p>
+        </button>
         <button id="go-setup" type="button" data-enter>
           <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg>I'm running the vote</span>
-          <p>Name the roster, shape the houses, generate the key and codes, decode the chips.</p>
-        </button>
-        <button id="go-vote" type="button" data-enter>
-          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16V9l5-4 5 4v7"/><path d="M10 16v-4h4v4"/></svg>I'm voting</span>
-          <p>Open the group's round code, arrange your friends, post one encrypted chip.</p>
+          <p>Name the roster, shape the houses, generate the key and everyone's invite codes.</p>
         </button>
         <button id="go-results" type="button" data-enter>
           <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>See the splits</span>
-          <p>Paste the results code — then try any house layout you like, live.</p>
+          <p>Got a results code? Try any house layout live — no revote needed.</p>
         </button>
       </div>
       <div class="promise" data-enter>
@@ -598,7 +624,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10f</span>
+      <span>House Sort · build 2026-11-10g</span>
     </div>
   </footer>
 </div>
@@ -671,6 +697,7 @@ if(!hasCrypto){
 /* ═════════ router ═════════ */
 function show(id){
   for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results"]) $(s).hidden = (s!==id);
+  document.body.classList.toggle("at-home", id==="sc-home");
   const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
   document.querySelectorAll(".step").forEach(el=>{
     el.classList.toggle("on", step!=null && +el.dataset.step===step);
@@ -692,6 +719,7 @@ function goHome(){
 }
 $("brand-home").onclick = goHome;
 $("brand-home").addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
+document.querySelectorAll("[data-back]").forEach(b=>b.onclick=goHome);
 
 /* ═════════ crypto plumbing ═════════ */
 async function generatePair(){
@@ -1180,6 +1208,7 @@ let vRound=null, vPub=null, vRoster=[], vLayout=[], myIx=-1, vTie=1;
 function resetVote(){
   $("vin-round").value=""; $("vin-pub-ok").classList.remove("show"); $("vin-pub-err").classList.remove("show");
   $("vin-form").hidden=true; $("chipout").hidden=true; $("vin-chip-err").classList.remove("show");
+  $("vin-rank").hidden=true; $("vin-start-err").classList.remove("show");
   $("vin-status").textContent="Waiting for the round code — the group-chat message starting H44S1-";
   $("vin-code").value=""; vRound=null; vPub=null; vRoster=[]; vLayout=[]; myIx=-1; vTie=1;
 }
@@ -1228,7 +1257,6 @@ $("vin-name").addEventListener("change", ()=>{
   $("vin-start-err").classList.remove("show");
   if(ix<0){ bState=null; return; }
   buildBoard();
-  autoCheckin();
 });
 $("btn-checkin").onclick=()=>{
   const err=$("vin-start-err"); err.classList.remove("show");
@@ -1236,15 +1264,16 @@ $("btn-checkin").onclick=()=>{
   const code=$("vin-code").value.trim().toUpperCase();
   if(!/^[A-Z0-9]{6}$/.test(code)){ err.textContent="Your invite code is 6 letters/digits, like K4Q7XP."; err.classList.add("show"); $("vin-code").focus(); return; }
   $("vin-rank").hidden=false;
+  // on a phone the board sits below the fold — bring it into view once it's open
+  if(matchMedia("(pointer:coarse)").matches){
+    requestAnimationFrame(()=>$("vin-rank").scrollIntoView({behavior:"smooth", block:"start"}));
+  }
 };
-/* as soon as name + a well-formed code are both in, reveal the ranking — no submit click needed */
-function autoCheckin(){
-  if(myIx<0) return;
-  if(!/^[A-Z0-9]{6}$/.test($("vin-code").value.trim().toUpperCase())) return;
+/* editing the invite code after check-in means checking in again */
+$("vin-code").addEventListener("input", ()=>{
+  $("vin-rank").hidden=true;
   $("vin-start-err").classList.remove("show");
-  $("vin-rank").hidden=false;
-}
-$("vin-code").addEventListener("input", autoCheckin);
+});
 $("vin-code").addEventListener("keydown",(e)=>{ if(e.key==="Enter") $("btn-checkin").click(); });
 
 /* ═════════ ranking board: people are bubbles, each shelf is a preference level.

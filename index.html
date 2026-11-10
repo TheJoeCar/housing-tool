@@ -162,7 +162,11 @@
   /* ── ranking board: shelves + a scattered pool of bubbles ── */
   .board{border:1px solid var(--border); border-radius:var(--radius-sm); background:
       linear-gradient(var(--surface),var(--surface)) padding-box;
-      display:block; overflow:hidden; user-select:none; touch-action:none}
+      display:block; overflow:hidden; user-select:none; touch-action:none; position:relative}
+  .lanemark{position:absolute; left:12px; right:12px; height:0; border-top:2.5px dashed var(--accent);
+    pointer-events:none; z-index:6; filter:drop-shadow(0 2px 6px rgba(91,107,84,.45))}
+  .lanemark::before{content:""; position:absolute; left:-7px; top:-6px; width:11px; height:11px;
+    border-radius:999px; background:var(--accent); box-shadow:0 0 0 3px rgba(91,107,84,.18)}
   .shelves{display:flex; flex-direction:column; gap:8px; padding:14px 14px 6px; min-height:56px}
   .shelf{
     display:flex; align-items:center; gap:10px; min-height:56px;
@@ -185,7 +189,9 @@
     min-height:88px; background:#F1EEE3; position:relative;
     transition:background .18s var(--ease), box-shadow .18s var(--ease)}
   .pool.drop{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent)}
+  .pool.is-empty{align-items:center}
   .poolhint{width:100%; text-align:center; color:var(--muted); font-size:12.5px; margin-bottom:-1px}
+  .pool.is-empty .poolhint{margin:0; font-style:italic}
   .bub{
     --h:210; display:inline-flex; align-items:center; gap:7px; cursor:grab; touch-action:none;
     border-radius:999px; padding:8px 13px 8px 9px; position:relative;
@@ -206,8 +212,8 @@
   .bub.drag{cursor:grabbing; transition:none; position:fixed; z-index:40; pointer-events:none;
     box-shadow:0 6px 14px rgba(27,28,24,.2), 0 18px 34px -10px hsl(var(--h) 30% 40% / .55)}
   .bub.drag .nmw{animation:none}
-  .bub .tiechip{position:absolute; top:-8px; right:-7px; background:var(--accent); color:#F4F2EA;
-    border-radius:999px; font-size:9.5px; font-weight:700; padding:2px 6px; letter-spacing:.03em; box-shadow:0 1px 3px rgba(27,28,24,.3)}
+  .bub:hover .nmw{animation:waggle .85s ease-in-out infinite}
+  @keyframes waggle{0%,100%{transform:rotate(-3.2deg)} 30%{transform:rotate(2.7deg)} 60%{transform:rotate(-1.7deg)} 82%{transform:rotate(1.1deg)}}
   @keyframes bob{0%,100%{transform:translateY(-1.6px)} 50%{transform:translateY(1.6px)}}
   @keyframes landed{0%{transform:scale(1.07)} 55%{transform:scale(.96,.92)} 100%{transform:none}}
   .bub.landed{animation:landed .3s var(--ease)}
@@ -494,6 +500,7 @@ Paulo</textarea>
             <label id="ranklabel">Rank the others — the top shelf is who you want most</label>
             <div class="board" id="board" role="listbox" aria-labelledby="ranklabel">
               <div class="shelves" id="shelves"></div>
+              <div class="lanemark" id="lanemark" hidden></div>
               <div class="pool" id="pool" aria-label="Not yet ranked">
                 <div class="poolhint" id="poolhint">Still waiting — grab one and drag it up into the rows</div>
               </div>
@@ -580,7 +587,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10b</span>
+      <span>House Sort · build 2026-11-10c</span>
     </div>
   </footer>
 </div>
@@ -630,9 +637,18 @@ function copyText(text, msg){
       ta.select(); document.execCommand("copy"); ta.remove(); toast(msg||"Copied"); });
 }
 const initials = (name) => (name.trim().split(/\s+/).map(w=>w[0]).join("").toUpperCase() || "?").slice(0,2);
+let HUE_MAP = new Map();                                   // lower(name) → hue for this roster
 function hueOf(name){
+  const k=name.trim().toLowerCase();
+  if(HUE_MAP.has(k)) return HUE_MAP.get(k);
   let h=7; for (const c of name) h=((h*31)+c.codePointAt(0))>>>0;
   return HUES[h%HUES.length];
+}
+/* even spacing around the wheel keeps neighbours distinct; anchored on a soft blue */
+function assignHues(names){
+  HUE_MAP=new Map();
+  const n=Math.max(names.length,1);
+  names.forEach((nm,i)=>HUE_MAP.set(nm.trim().toLowerCase(), Math.round((208+i*(360/n))%360)));
 }
 const fmtLayout = (l) => l.join(" + ");
 
@@ -720,6 +736,7 @@ $("roster-ta").addEventListener("input", ()=>{
   keyJson=null; $("keyout").hidden=true; $("panel-key").hidden=true;
   if(!names){ $("panel-layout").hidden=true; return; }
   roster=names;
+  assignHues(names);
   layout=normaliseLayout(names.length, presetsFor(names.length)[0] || [names.length-2,2]);
   if(!layout) layout=[names.length>=6?names.length-2:names.length/2, names.length>=6?2:names.length/2];
   renderPresets("setup"); setupStreet(false);
@@ -1178,6 +1195,7 @@ $("vin-round").addEventListener("input", async ()=>{
     vTie=(Number.isInteger(o.t) && o.t>=1 && o.t<=o.roster.length-1) ? o.t : 1;
     vPub=await importPub(fromB64u(o.pub));
     vRoster=o.roster;
+    assignHues(o.roster);
     vLayout=o.layout;
     vRound={roster:o.roster, layout:o.layout, t:vTie, pub:o.pub};
     $("vin-pub-ok").textContent=`Round code opens: ${vRoster.length} people, houses ${fmtLayout(vLayout)}${vTie>1?" · ties up to "+vTie:""}.`;
@@ -1254,9 +1272,9 @@ function makeBub(i, settled){
 function renderBoard(prev){
   document.body.querySelectorAll(":scope > .bub").forEach(el=>el.remove());   // no ghost drops, ever
   const shelves=$("shelves"), pool=$("pool");
+  const oldPoolH=pool.offsetHeight;
   shelves.innerHTML="";
   [...pool.querySelectorAll(".bub")].forEach(b=>b.remove());
-  const cap=Math.min(vTie, vRoster.length-1);
   bState.levels.forEach(g=>{
     const sheet=document.createElement("div"); sheet.className="shelf";
     const lvl=document.createElement("span"); lvl.className="lvl";
@@ -1265,7 +1283,6 @@ function renderBoard(prev){
     const slot=document.createElement("div"); slot.className="slot";
     g.forEach(i=>{
       const b=makeBub(i,true);
-      if(vTie>1 && g.length>1){ const chip=document.createElement("span"); chip.className="tiechip"; chip.textContent=""+g.length; b.appendChild(chip); }
       slot.appendChild(b);
     });
     sheet.append(lvl,slot);
@@ -1281,8 +1298,22 @@ function renderBoard(prev){
     shelves.appendChild(sheet);
     bState.pool.forEach(i=>pool.appendChild(makeBub(i,false)));
   }
-  $("poolhint").style.display=bState.pool.length?"":"none";
-  wireDnD(cap);
+  // an empty pool is still a drop target — say so instead of leaving a blank band
+  pool.classList.toggle("is-empty", !bState.pool.length);
+  const hint=$("poolhint");
+  hint.style.display="";
+  hint.textContent = bState.pool.length
+    ? "Still waiting — grab one and drag it up into the rows"
+    : "Everyone's in — drag a bubble back here to unrank them";
+  const newPoolH=pool.offsetHeight;
+  if(oldPoolH && newPoolH && Math.abs(oldPoolH-newPoolH)>3){
+    pool.style.overflow="hidden";
+    const grow=pool.animate(
+      [{height:oldPoolH+"px"},{height:newPoolH+"px"}],
+      {duration:260, easing:"cubic-bezier(.22,.9,.28,1)"});
+    grow.onfinish=()=>{ pool.style.overflow=""; };
+  }
+  wireDnD();
   if(prev instanceof Map) playFLIP(prev);
 }
 function captureRects(){
@@ -1339,6 +1370,15 @@ function placeBubble(i, target, prev){
   bState.levels=bState.levels.filter(g=>g.length);
   renderBoard(prev);
 }
+/* drop into the space between shelves: insert a fresh shelf at that level */
+function insertAtLevel(i,k,prev){
+  bState.pool=bState.pool.filter(x=>x!==i);
+  bState.levels=bState.levels.map(g=>g.filter(x=>x!==i));   // keep emptied seats so k stays meaningful
+  k=Math.max(0,Math.min(k,bState.levels.length));
+  bState.levels.splice(k,0,[i]);
+  bState.levels=bState.levels.filter(g=>g.length);
+  renderBoard(prev);
+}
 function nudgeBubble(i,dir){
   const cap=Math.min(vTie, vRoster.length-1);
   const k=bState.levels.findIndex(g=>g.includes(i));
@@ -1361,19 +1401,26 @@ function bump(i){  // shake when you can't go above the top row
   b.animate([{transform:"translateX(0)"},{transform:"translateX(-4px)"},{transform:"translateX(4px)"},{transform:"translateX(0)"}],{duration:220});
 }
 /* pointer drag: pick up, warp with lagged tilt + squish, drop with a landing bounce */
-function wireDnD(cap){
+function wireDnD(){
   let drag=null;
-  const clearMarks=()=>{ $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop")); };
+  const lane=$("lanemark");
+  const clearMarks=()=>{
+    $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop"));
+    lane.hidden=true;
+  };
   $board().querySelectorAll(".bub").forEach(b=>{
     b.addEventListener("pointerdown",(e)=>{
       if(e.button!==0||drag) return;
       e.preventDefault();
       const r=b.getBoundingClientRect();
-      drag={ i:+b.dataset.i, el:b, dx:e.clientX-r.left, dy:e.clientY-r.top, lx:e.clientX, ly:e.clientY, rt:0 };
-      b.classList.add("drag");
-      b.style.left=r.left+"px"; b.style.top=r.top+"px"; b.style.width=r.width+"px";
-      document.body.appendChild(b);
-      b.style.transform="scale(1.09)";         // quick lift off the scatter
+      // drag a floating clone; the real bubble keeps its space so the layout never jumps
+      const ghost=b.cloneNode(true);
+      ghost.classList.add("drag");
+      ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px"; ghost.style.width=r.width+"px";
+      ghost.style.transform="scale(1.09)";
+      document.body.appendChild(ghost);
+      b.style.visibility="hidden";
+      drag={ i:+b.dataset.i, el:ghost, orig:b, dx:e.clientX-r.left, dy:e.clientY-r.top, lx:e.clientX, ly:e.clientY, rt:0 };
       b.setPointerCapture?.(e.pointerId);
       clearMarks();
     });
@@ -1389,8 +1436,13 @@ function wireDnD(cap){
     drag.el.style.top=(e.clientY-drag.dy)+"px";
     drag.el.style.transform=`rotate(${drag.rt.toFixed(2)}deg) scale(${(1+spd/240).toFixed(3)}, ${(1-spd/340).toFixed(3)})`;
     clearMarks();
-    const t=hitTarget(e.clientX,e.clientY,drag.el);
-    (t && t.el || $("pool")).classList.add("drop");
+    const t=hitTarget(e.clientX,e.clientY);
+    if(t && t.kind==="shelf") t.el.classList.add("drop");
+    else if(t && t.kind==="gap"){
+      const br=$board().getBoundingClientRect();
+      lane.hidden=false;
+      lane.style.top=(t.y-br.top)+"px";
+    }else $("pool").classList.add("drop");
   },{passive:true});
   const finish=(e)=>{
     if(!drag) return;
@@ -1399,28 +1451,40 @@ function wireDnD(cap){
     const prev=captureRects();
     const r=d.el.getBoundingClientRect();
     prev.set(d.i,{x:r.left,y:r.top});          // FLIP from wherever the bubble was released
-    d.el.remove();                             // the ghost is gone before re-render
+    d.el.remove();
+    if(d.orig) d.orig.style.visibility="";     // will be replaced by re-render anyway
     const t=hitTarget(e.clientX,e.clientY);
-    placeBubble(d.i, t && t.kind==="shelf" ? t.k : "pool", prev);
+    if(t && t.kind==="gap") insertAtLevel(d.i,t.k,prev);
+    else placeBubble(d.i, t && t.kind==="shelf" ? t.k : "pool", prev);
   };
   window.addEventListener("pointerup",finish);
   window.addEventListener("pointercancel",finish);
 }
-function hitTarget(x,y,el){
-  let best=null;
-  [...$board().querySelectorAll(".shelf")].forEach((sheet,k)=>{
-    const r=sheet.getBoundingClientRect();
-    if(x>=r.left-6&&x<=r.right+6&&y>=r.top-8&&y<=r.bottom+8) best={kind:"shelf",k,el:sheet};
-  });
-  if(!best){
-    const rp=$("pool").getBoundingClientRect();
-    if(y>=rp.top-8 && x>=rp.left-6 && x<=rp.right+6) best={kind:"pool",el:$("pool")};
+/* returns {kind:"shelf"|"gap"|"pool"}; "gap" carries the y of the insertion line */
+function hitTarget(x,y){
+  const sheets=[...$board().querySelectorAll(".shelf")];
+  for(let k=0;k<sheets.length;k++){
+    const r=sheets[k].getBoundingClientRect();
+    if(x>=r.left-4&&x<=r.right+4&&y>=r.top+3&&y<=r.bottom-3) return {kind:"shelf",k,el:sheets[k]};
   }
-  return best;
+  const gap=gapTarget(x,y,sheets);
+  if(gap) return {kind:"gap",k:gap.k,y:gap.y};
+  const rp=$("pool").getBoundingClientRect();
+  if(y>=rp.top&&y<=rp.bottom&&x>=rp.left-6&&x<=rp.right+6) return {kind:"pool",el:$("pool")};
+  return null;
 }
-function liveIndex(i){
-  const k=bState.levels.findIndex(g=>g.includes(i));
-  return k===-1 ? "pool" : k;
+/* the thin spaces between shelves are insertion lanes: dropping there opens a new level */
+function gapTarget(x,y,sheets){
+  const sc=$("shelves").getBoundingClientRect();
+  if(!(x>=sc.left-4&&x<=sc.right+4)||y<sc.top-12||y>sc.bottom+12) return null;
+  if(!sheets.length) return {k:0,y:sc.top};
+  const bounds=[{k:0,y:sheets[0].top-5}];
+  for(let k=0;k<sheets.length-1;k++)
+    bounds.push({k:k+1,y:(sheets[k].getBoundingClientRect().bottom+sheets[k+1].getBoundingClientRect().top)/2});
+  bounds.push({k:sheets.length,y:sheets[sheets.length-1].getBoundingClientRect().bottom+5});
+  let best=null,bd=1e9;
+  bounds.forEach(b=>{ const d=Math.abs(y-b.y); if(d<bd){bd=d;best=b;} });
+  return bd<=20?best:null;
 }
 
 
@@ -1486,6 +1550,7 @@ $("btn-reveal").onclick=async ()=>{
     const n=pack.roster.length;
     const privBuf=await openKey(pack.enc,$("pp2").value).catch(()=>{ throw new Error("Wrong passphrase — try again."); });
     privKey=await importPriv(privBuf);
+    assignHues(pack.roster);
 
     const chips=[...new Set($("chips-in").value.match(CHIP_RE)||[])];
     if(chips.length<n) throw new Error(`Found ${chips.length} chip${chips.length===1?"":"s"} — need all ${n}.`);
@@ -1582,6 +1647,7 @@ function openViewer(code){
   if(res.v!==1 || !Array.isArray(res.roster) || !Array.isArray(res.layout) || !Array.isArray(res.w))
     throw new Error("unexpected shape");
   const n=res.roster.length;
+  assignHues(res.roster);
   if(!Array.isArray(res.w) || res.w.length!==n || res.w.some(row=>!Array.isArray(row)||row.length!==n)) throw new Error("bad matrix");
   for(let i=0;i<n;i++) for(let j=0;j<n;j++){
     if(i===j){ if(res.w[i][j]!==0) throw new Error("bad matrix"); }

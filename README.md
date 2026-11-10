@@ -39,7 +39,9 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
    rows show where the next slot lands, and you can stack several people on one row only
    when the organiser allows ties; people sharing a row count as tied, and a bigger row
    pulls a little weaker per person, so a large "don't mind" group can't dominate.
-   (Keyboard-only: focus a bubble and press ↑/↓.)
+   Drop a bubble **in the gap between two rows** to open a new row at that exact spot,
+   or **below the last row** to give someone their own new bottom row — that's how you
+   split a tied group apart. (Keyboard-only: focus a bubble and press ↑/↓.)
 4. **Create my chip** → copy the encrypted gibberish → post it in the chat. Done.
 
 **Anyone:**

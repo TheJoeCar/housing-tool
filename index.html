@@ -45,7 +45,7 @@
   .brand svg{display:block}
   .brand strong{font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:-.01em}
   .brand span{color:var(--muted); font-size:13.5px}
-  .steps{display:flex; gap:6px; flex-wrap:wrap}
+  .steps{display:flex; gap:6px; margin-top:18px; flex-wrap:wrap}
   .step{
     display:flex; align-items:center; gap:7px; padding:7px 13px; border-radius:999px;
     border:1px solid var(--border); background:var(--surface);
@@ -59,18 +59,7 @@
   .step.done{color:var(--accent)}
   .step.done i{background:var(--accent-soft); color:var(--accent)}
   .step.on i{background:var(--accent); color:#fff}
-  .navrow{display:flex; align-items:center; justify-content:space-between; gap:10px 14px; margin-top:18px; flex-wrap:wrap}
-  .navrow .steps{margin-top:0}
-  .homechip{
-    display:none; align-items:center; gap:6px; cursor:pointer;
-    font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--muted);
-    background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:7px 13px;
-    transition:color .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease), transform .12s var(--ease);
-  }
-  body:not(.at-home) .homechip{display:inline-flex}
-  .homechip:hover{color:var(--accent); border-color:var(--accent); background:var(--accent-soft); transform:translateY(-1px)}
-  .homechip:active{transform:translateY(0)}
-  .homechip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
 
   /* ── entrance ───────────────────────────────────────── */
   @keyframes enter{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
@@ -80,25 +69,50 @@
   .gate{padding:34px 0 64px}
   .gate h1{font-size:clamp(33px,6vw,50px); font-weight:700; max-width:16ch}
   .gate .lede{margin-top:14px; font-size:17.5px; color:var(--muted); max-width:52ch}
-  .choice{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:32px}
-  .choice button{
-    text-align:left; cursor:pointer; font-family:var(--font-body); font-size:15px; color:var(--ink);
+  .landing{display:grid; grid-template-columns:1.22fr 1fr; gap:13px; margin-top:30px}
+  .landing .hero{
+    display:flex; flex-direction:column; align-items:flex-start; text-align:left; cursor:pointer;
+    font-family:var(--font-body); font-size:15px; color:var(--ink);
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:18px 19px 16px; box-shadow:var(--shadow);
+    padding:20px 21px 18px; box-shadow:var(--shadow);
     transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
   }
-  .choice button:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--border-strong)}
-  .choice button:active{transform:translateY(0); box-shadow:var(--shadow)}
-  .choice .who{display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-weight:600; font-size:16px}
-  .choice .who svg{flex:none}
-  .choice .pick{display:inline-flex; align-items:center; margin-bottom:10px; padding:3px 8px 4px;
+  .landing .hero:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--border-strong)}
+  .landing .hero:active{transform:translateY(0); box-shadow:var(--shadow)}
+  .landing .who{display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-weight:600; font-size:16.5px}
+  .landing .who svg{flex:none}
+  .landing .hero p{margin-top:8px; font-size:13.5px; color:var(--muted)}
+  .landing .go{margin-top:auto; padding-top:16px; font-weight:600; font-size:13.5px; color:var(--accent)}
+  .landing .go::after{content:"\2192"; margin-left:6px; display:inline-block; transition:transform .18s var(--ease)}
+  .landing .hero:hover .go::after{transform:translateX(3px)}
+  .landing .pick{display:inline-flex; align-self:flex-start; margin-bottom:12px; padding:3px 9px 4px;
     border-radius:999px; background:var(--accent); color:var(--accent-ink);
     font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase}
-  .choice button.start{border-color:var(--accent); background:linear-gradient(180deg,#F4F8F3,#FFFFFF);
-    box-shadow:0 14px 28px -20px rgba(47,107,79,.75)}
-  .choice button.start .who{color:var(--accent)}
-  .choice button.start .who::after{content:"→"; margin-left:auto; font-size:17px; color:var(--accent)}
-  .choice p{margin-top:7px; font-size:13.5px; color:var(--muted)}
+  .landing .hero.start{background:var(--accent); border-color:var(--accent); color:#F4F2EA;
+    box-shadow:0 20px 36px -18px rgba(47,107,79,.8)}
+  .landing .hero.start .who{color:#fff; font-size:18px}
+  .landing .hero.start p{color:rgba(244,242,234,.82)}
+  .landing .hero.start .pick{background:#F4F2EA; color:var(--accent)}
+  .landing .hero.start .go{color:#F4F2EA}
+  .landing .herosteps{display:flex; flex-wrap:wrap; align-items:center; gap:7px 14px; margin-top:15px;
+    font-size:12px; font-weight:600; color:rgba(244,242,234,.85)}
+  .landing .herosteps .hs{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
+  .landing .herosteps i{font-style:normal; width:17px; height:17px; border-radius:999px; flex:none;
+    background:rgba(244,242,234,.18); display:inline-grid; place-items:center; font-size:10.5px}
+  .landing .orgrow{
+    grid-column:1 / -1; display:flex; align-items:center; gap:14px; text-align:left; cursor:pointer;
+    font-family:var(--font-body); color:var(--ink);
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 19px; box-shadow:var(--shadow);
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  }
+  .landing .orgrow:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--border-strong)}
+  .landing .orgrow:active{transform:translateY(0); box-shadow:var(--shadow)}
+  .landing .orgrow svg{flex:none}
+  .landing .orgtext{display:flex; flex-direction:column; gap:2px; min-width:0}
+  .landing .orgtext strong{font-family:var(--font-display); font-weight:600; font-size:15.5px}
+  .landing .orgtext small{color:var(--muted); font-size:12.5px}
+  .landing .orgrow .go{margin-left:auto; font-weight:600; font-size:13px; color:var(--muted); white-space:nowrap}
   .promise{
     margin-top:26px; display:flex; gap:10px; align-items:flex-start;
     padding:14px 16px; border:1px solid var(--border); border-radius:var(--radius-sm);
@@ -106,6 +120,31 @@
   }
   .promise svg{flex:none; margin-top:1px}
   .promise strong{color:var(--ink)}
+
+  /* ── roster pool (setup) ────────────────────────────── */
+  .rosteradd{display:flex; gap:9px}
+  .rosteradd input{flex:1}
+  .rosteradd .btn{flex:none}
+  .rosterpool{
+    display:flex; flex-wrap:wrap; justify-content:center; column-gap:11px; row-gap:15px;
+    margin-top:12px; min-height:74px; padding:15px 12px 17px; position:relative;
+    background:#F1EEE3; border-radius:var(--radius-sm); touch-action:pan-y}
+  .rosterpool:empty::before{content:"No one yet — add the first name above"; color:#B9B5A6;
+    font-size:12.5px; font-style:italic; margin:auto}
+  .bub{font-family:var(--font-body)}
+  .bub.roster{cursor:pointer; transform:rotate(var(--tilt,0deg)) translateY(var(--dy,0px))}
+  .bub.roster .nmw{animation:none}
+  .bub.roster .rm{width:17px; height:17px; border-radius:999px; flex:none; margin-left:2px;
+    display:grid; place-items:center; font-size:13.5px; line-height:1;
+    color:hsl(var(--h) 40% 30%); background:hsl(var(--h) 40% 79%);
+    opacity:.55; transition:opacity .15s var(--ease), background .15s var(--ease), color .15s var(--ease)}
+  .bub.roster:hover .rm{opacity:1; background:#E8B4A8; color:#7C3A2A}
+  .bub.roster.pop{animation:popin .42s var(--ease)}
+  @keyframes popin{
+    0%{opacity:0; transform:rotate(var(--tilt,0deg)) translateY(var(--dy,0px)) scale(.45)}
+    62%{opacity:1; transform:rotate(var(--tilt,0deg)) translateY(var(--dy,0px)) scale(1.09)}
+    100%{opacity:1; transform:rotate(var(--tilt,0deg)) translateY(var(--dy,0px)) scale(1)}
+  }
 
   /* ── panels ─────────────────────────────────────────── */
   .screen{padding:10px 0 72px}
@@ -342,7 +381,13 @@
   footer .line{border-top:1px solid var(--border); padding-top:18px; display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap}
 
   @media (max-width:700px){
-    .choice{grid-template-columns:1fr}
+    .wrap{padding:0 16px}
+    .landing{grid-template-columns:1fr; gap:11px; margin-top:24px}
+    .landing .orgrow .go{display:none}
+    .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:14px}
+    .step{min-width:0; padding:6px 4px 6px 7px; font-size:10.5px; gap:4px; white-space:nowrap; justify-content:flex-start}
+    .step span{overflow:hidden; text-overflow:ellipsis}
+    .step i{width:15px; height:15px; font-size:9.5px; flex:none}
     .panel{padding:20px 17px}
     .codes .row{padding:9px 11px}
     .bld{width:142px}
@@ -354,6 +399,7 @@
     .shelf .lvl{font-size:16px; width:24px; padding-right:6px}
     .bub{font-size:13.5px; padding:7px 10px 7px 7px}
     .pool{padding:10px 10px 12px}
+    .rosterpool{padding:11px 9px 13px; row-gap:11px; column-gap:9px}
     .tieseg{gap:4px}
     .tieseg .segb{padding:7px 10px 6px}
   }
@@ -363,23 +409,17 @@
   }
 </style>
 </head>
-<body class="at-home">
+<body>
 <div class="wrap">
   <header>
     <div class="brand" id="brand-home" role="button" tabindex="0" aria-label="Back to the front page" title="Back to the front page">
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2F6B4F"/><path d="M6 16l7-5.6L20 16v7.4a.6.6 0 0 1-.6.6h-3.9v-4.4h-2.4v4.4H6.6a.6.6 0 0 1-.6-.6z" fill="#F6F4EE"/><path d="M20.6 16.4l4.9-3.8 4.9 3.8v5.4c0 .4-.3.7-.7.7h-2.2v-2.9h-2.6v2.9h-2.2c-.4 0-.7-.3-.7-.7z" fill="#F6F4EE" opacity=".82"/></svg>
       <div><strong>House&nbsp;Sort</strong><br><span>Any group, any houses, zero visible votes</span></div>
     </div>
-    <div class="navrow">
-      <div class="steps" aria-label="How it works">
-        <span class="step" data-step="1"><i>1</i>Set up the vote</span>
-        <span class="step" data-step="2"><i>2</i>Everyone ranks</span>
-        <span class="step" data-step="3"><i>3</i>Splits revealed</span>
-      </div>
-      <button type="button" class="homechip" data-back aria-label="Back to the start">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
-        Back to start
-      </button>
+    <div class="steps" aria-label="How it works">
+      <span class="step" data-step="1"><i>1</i><span>Set up the vote</span></span>
+      <span class="step" data-step="2"><i>2</i><span>Everyone ranks</span></span>
+      <span class="step" data-step="3"><i>3</i><span>Splits revealed</span></span>
     </div>
   </header>
 
@@ -388,19 +428,23 @@
     <div class="gate">
       <h1 data-enter>Pick the houses without picking fights</h1>
       <p class="lede" data-enter>Everyone ranks the group — strict order, or the tie levels the organiser picked. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
-      <div class="choice">
-        <button id="go-vote" type="button" class="start" data-enter>
+      <div class="landing">
+        <button id="go-vote" type="button" class="hero start" data-enter>
           <span class="pick">Start here</span>
-          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16V9l5-4 5 4v7"/><path d="M10 16v-4h4v4"/></svg>I'm here to vote</span>
-          <p>Got a round code from the group chat? Paste it, rank the group, post one encrypted chip.</p>
+          <span class="who"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16V9l5-4 5 4v7"/><path d="M10 16v-4h4v4"/></svg>I'm here to vote</span>
+          <p>Got a round code from the group chat? Rank the group and post one encrypted chip — nobody sees anybody's list.</p>
+          <span class="herosteps" aria-hidden="true"><span class="hs"><i>1</i>Paste the round code</span><span class="hs"><i>2</i>Rank your friends</span><span class="hs"><i>3</i>Post your chip</span></span>
+          <span class="go">Start voting</span>
         </button>
-        <button id="go-setup" type="button" data-enter>
-          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg>I'm running the vote</span>
-          <p>Name the roster, shape the houses, generate the key and everyone's invite codes.</p>
-        </button>
-        <button id="go-results" type="button" data-enter>
+        <button id="go-results" type="button" class="hero" data-enter>
           <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>See the splits</span>
           <p>Got a results code? Try any house layout live — no revote needed.</p>
+          <span class="go">Open the results</span>
+        </button>
+        <button id="go-setup" type="button" class="orgrow" data-enter>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg>
+          <span class="orgtext"><strong>I'm running the vote</strong><small>Name the roster, shape the houses, generate the key and everyone's invite codes.</small></span>
+          <span class="go">Organiser tools</span>
         </button>
       </div>
       <div class="promise" data-enter>
@@ -414,10 +458,15 @@
   <section class="screen" id="sc-setup" hidden>
     <div class="panel">
       <h2>1 · The roster</h2>
-      <p class="sub">One name per line. These are the people splitting up — names are public, votes never are.</p>
+      <p class="sub">Add everyone who's splitting up — names are public, votes never are.</p>
       <div class="field">
-        <label for="roster-ta">Who's moving into houses</label>
-        <textarea id="roster-ta" rows="9" spellcheck="false">Rufus
+        <label for="roster-in">Who's moving into houses</label>
+        <div class="rosteradd">
+          <input type="text" id="roster-in" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Type a name — e.g. Rufus">
+          <button type="button" class="btn primary" id="btn-addname">Add</button>
+        </div>
+        <p class="hint">Each name lands in the pool as a bubble. Click a bubble to take that person out.</p>
+        <textarea id="roster-ta" hidden>Rufus
 Bradley
 Joe
 Chris
@@ -425,6 +474,7 @@ Shadi
 Blythe
 Dawid
 Paulo</textarea>
+        <div class="rosterpool" id="roster-pool" aria-live="polite"></div>
         <p class="hintline" id="roster-count"></p>
         <p class="err" id="roster-err"></p>
       </div>
@@ -624,7 +674,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10g</span>
+      <span>House Sort · build 2026-11-10h</span>
     </div>
   </footer>
 </div>
@@ -697,8 +747,7 @@ if(!hasCrypto){
 /* ═════════ router ═════════ */
 function show(id){
   for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results"]) $(s).hidden = (s!==id);
-  document.body.classList.toggle("at-home", id==="sc-home");
-  const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
+    const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
   document.querySelectorAll(".step").forEach(el=>{
     el.classList.toggle("on", step!=null && +el.dataset.step===step);
     el.classList.toggle("done", step!=null && +el.dataset.step<step);
@@ -719,7 +768,6 @@ function goHome(){
 }
 $("brand-home").onclick = goHome;
 $("brand-home").addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
-document.querySelectorAll("[data-back]").forEach(b=>b.onclick=goHome);
 
 /* ═════════ crypto plumbing ═════════ */
 async function generatePair(){
@@ -770,9 +818,12 @@ function parseRoster(){
   $("roster-count").textContent = `${names.length} people on the roster.`;
   return names;
 }
+let rosterPop=null;   // name to give the pop-in animation on the next pool render
+
 $("roster-ta").addEventListener("input", ()=>{
   const names=parseRoster();
   keyJson=null; $("keyout").hidden=true; $("panel-key").hidden=true;
+  renderRosterPool();
   if(!names){ $("panel-layout").hidden=true; return; }
   roster=names;
   assignHues(names);
@@ -782,6 +833,55 @@ $("roster-ta").addEventListener("input", ()=>{
   $("panel-layout").hidden=false;
   $("panel-key").hidden=false;   // roster + layout are set, so key generation is reachable
 });
+
+/* the roster pool: one tilted bubble per person, click to remove */
+function renderRosterPool(){
+  const pool=$("roster-pool"); pool.innerHTML="";
+  const names=($("roster-ta").value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean));
+  names.forEach((n,idx)=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="bub roster";
+    b.setAttribute("aria-label",`Remove ${n} from the roster`);
+    b.title=`Click to remove ${n}`;
+    b.style.setProperty("--h", hueOf(n));
+    b.style.setProperty("--tilt", `${(idx%11)-5}deg`);      // same personal tilt as the ranking pool
+    b.style.setProperty("--dy", `${((idx>>2)%9)-4}px`);
+    if(n===rosterPop){ b.classList.add("pop"); rosterPop=null; }
+    const dot=document.createElement("span"); dot.className="dot"; dot.setAttribute("aria-hidden","true");
+    const nm=document.createElement("span"); nm.className="nmw"; nm.textContent=n;
+    const rm=document.createElement("span"); rm.className="rm"; rm.setAttribute("aria-hidden","true"); rm.textContent="×";
+    b.append(dot,nm,rm);
+    b.onclick=()=>removeName(n);
+    pool.appendChild(b);
+  });
+}
+function addNameFromInput(){
+  const inp=$("roster-in");
+  const name=inp.value.trim().replace(/\s+/g," ");
+  const err=$("roster-err"); err.classList.remove("show");
+  if(!name) return;
+  const cur=($("roster-ta").value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean));
+  if(cur.some(n=>n.toLowerCase()===name.toLowerCase())){
+    err.textContent=`"${name}" is already on the roster.`; err.classList.add("show"); inp.select(); return;
+  }
+  if(cur.length>=MAX_NAMES){
+    err.textContent=`Up to ${MAX_NAMES} people per round for now.`; err.classList.add("show"); return;
+  }
+  rosterPop=name;
+  $("roster-ta").value=[...cur, name].join("\n");
+  $("roster-ta").dispatchEvent(new Event("input"));
+  inp.value=""; inp.focus();
+}
+function removeName(name){
+  const err=$("roster-err"); err.classList.remove("show");
+  rosterPop=null;
+  const cur=($("roster-ta").value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))
+    .filter(n=>n.toLowerCase()!==name.toLowerCase());
+  $("roster-ta").value=cur.join("\n");
+  $("roster-ta").dispatchEvent(new Event("input"));
+}
+$("btn-addname").onclick=addNameFromInput;
+$("roster-in").addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addNameFromInput(); } });
 
 /* ═════════ tie policy (organiser chooses how much sameness is allowed) ═════════ */
 let tieCap=1;   // max people allowed on one shelf; 1 = strict no-ties
@@ -1150,6 +1250,7 @@ function renderLayoutSum(){
 function initSetup(){
   if(!$("roster-ta").value.trim()) $("roster-ta").value=["Rufus","Bradley","Joe","Chris","Shadi","Blythe","Dawid","Paulo"].join("\n");
   $("roster-ta").dispatchEvent(new Event("input"));
+  $("roster-in").value="";
   syncTieUI();
   keyJson=null; $("keyout").hidden=true;
   $("pp1").value="";

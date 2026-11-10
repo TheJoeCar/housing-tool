@@ -13,7 +13,8 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 **The organiser:**
 
 1. Open the tool → *I'm running the vote*.
-2. Type the roster (one name per line), shape the houses (presets, ± steppers, add/remove), and
+2. Add each person's name (it lands in the roster pool as a bubble — click a bubble to remove
+   them), shape the houses (presets, ± steppers, add/remove), and
    pick how many people may share a preference **row** — *No ties* (strict, strongest
    anti-gaming), or shelves of up to 2 / 3 / 4 (tied shelves pull slightly weaker each, so big
    "don't care" groups self-dampen). The rule travels inside the round code; chips are
@@ -50,8 +51,7 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 **Anyone:**
 
 - Open the tool → *See the splits* → paste the results code. No key needed.
-- Every other screen has a **Back to start** button in the header, and the House Sort logo
-  always takes you home too.
+- Every screen: the House Sort logo in the header takes you back to the start.
 - The viewer also has a **live layout playground**: move beds between houses (or tap a preset
   like *3 + 5*) and the best groupings recompute instantly — no revote. Perfect for "what if we
   do 3 + 5 instead of 4 + 4?"

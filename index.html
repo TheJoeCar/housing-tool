@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>House Sort — split the group, keep the votes secret</title>
+<meta name="description" content="Rank your friends once, post an encrypted chip in the group chat, and the calculator reveals fair house splits of any shape. Runs entirely in your browser.">
+<meta name="page-type" content="software">
+<meta name="site-kind" content="software">
+<meta name="theme-color" content="#F6F4EE">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232F6B4F'/%3E%3Cpath d='M6 16l7-5.6L20 16v7.4a.6.6 0 0 1-.6.6h-3.9v-4.4h-2.4v4.4H6.6a.6.6 0 0 1-.6-.6z' fill='%23F6F4EE'/%3E%3Cpath d='M20.6 16.4l4.9-3.8 4.9 3.8v5.4c0 .4-.3.7-.7.7h-2.2v-2.9h-2.6v2.9h-2.2c-.4 0-.7-.3-.7-.7z' fill='%23F6F4EE' opacity='.82'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F4EE; --surface:#FFFFFF; --ink:#1B1C18; --muted:#6B685D;
+    --accent:#2F6B4F; --accent-ink:#FFFFFF; --accent-soft:#E7F0EA;
+    --border:#E4E1D5; --border-strong:#CFCBBD;
+    --danger:#A5423B;
+    --radius:14px; --radius-sm:9px;
+    --shadow:0 1px 2px rgba(27,28,24,.05), 0 8px 24px rgba(27,28,24,.06);
+    --shadow-lift:0 2px 4px rgba(27,28,24,.06), 0 14px 34px rgba(27,28,24,.10);
+    --font-display:"Space Grotesk", system-ui, sans-serif;
+    --font-body:"Inter", system-ui, sans-serif;
+    --font-mono:ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:780px; margin:0 auto; padding:0 22px}
+  h1,h2,h3,h4{font-family:var(--font-display); line-height:1.15; letter-spacing:-.01em; margin:0}
+  p{margin:0}
+  ::selection{background:#CFE3D7}
+
+  /* ── header ─────────────────────────────────────────── */
+  header{padding:26px 0 6px}
+  .brand{display:flex; align-items:center; gap:11px; cursor:pointer; border-radius:10px; padding:3px 6px 3px 3px; margin:-3px 0 0 -9px}
+  .brand:hover{background:rgba(47,107,79,.06)}
+  .brand:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .brand svg{display:block}
+  .brand strong{font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:-.01em}
+  .brand span{color:var(--muted); font-size:13.5px}
+  .steps{display:flex; gap:6px; margin-top:18px; flex-wrap:wrap}
+  .step{
+    display:flex; align-items:center; gap:7px; padding:7px 13px; border-radius:999px;
+    border:1px solid var(--border); background:var(--surface);
+    font-size:13px; font-weight:600; color:var(--muted);
+    transition:color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .step i{font-style:normal; width:20px; height:20px; border-radius:999px; background:var(--border);
+    color:var(--ink); display:grid; place-items:center; font-size:11.5px;
+    transition:background .2s var(--ease), color .2s var(--ease)}
+  .step.on{color:var(--ink); border-color:var(--accent); background:var(--accent-soft)}
+  .step.done{color:var(--accent)}
+  .step.done i{background:var(--accent-soft); color:var(--accent)}
+  .step.on i{background:var(--accent); color:#fff}
+
+  /* ── entrance ───────────────────────────────────────── */
+  @keyframes enter{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  [data-enter]{animation:enter .55s var(--ease) backwards}
+
+  /* ── home ───────────────────────────────────────────── */
+  .gate{padding:34px 0 64px}
+  .gate h1{font-size:clamp(33px,6vw,50px); font-weight:700; max-width:16ch}
+  .gate .lede{margin-top:14px; font-size:17.5px; color:var(--muted); max-width:52ch}
+  .choice{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:32px}
+  .choice button{
+    text-align:left; cursor:pointer; font-family:var(--font-body); font-size:15px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 19px 16px; box-shadow:var(--shadow);
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  }
+  .choice button:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--border-strong)}
+  .choice button:active{transform:translateY(0); box-shadow:var(--shadow)}
+  .choice .who{display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-weight:600; font-size:16px}
+  .choice .who svg{flex:none}
+  .choice p{margin-top:7px; font-size:13.5px; color:var(--muted)}
+  .promise{
+    margin-top:26px; display:flex; gap:10px; align-items:flex-start;
+    padding:14px 16px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--surface); font-size:14px; color:var(--muted);
+  }
+  .promise svg{flex:none; margin-top:1px}
+  .promise strong{color:var(--ink)}
+
+  /* ── panels ─────────────────────────────────────────── */
+  .screen{padding:10px 0 72px}
+  .screen[hidden]{display:none}
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:26px; box-shadow:var(--shadow); margin-top:24px;
+  }
+  .panel + .panel{margin-top:15px}
+  .panel h2{font-size:21px}
+  .panel h3{font-size:15.5px; margin-bottom:4px}
+  .sub{color:var(--muted); font-size:14.5px; margin-top:6px}
+  .field{margin-top:20px}
+  .field > label{display:block; font-size:13.5px; font-weight:600; margin-bottom:7px}
+  .field > .hint, .hintline{font-size:12.5px; color:var(--muted); margin-top:6px}
+  input[type=text],input[type=password],select,textarea{
+    width:100%; font-family:var(--font-body); font-size:15.5px; color:var(--ink);
+    padding:12px 14px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+    background:var(--surface); transition:border-color .15s var(--ease), box-shadow .15s var(--ease);
+  }
+  textarea{font-family:var(--font-mono); font-size:12.5px; line-height:1.5; resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(47,107,79,.16)}
+  .err{color:var(--danger); font-size:13.5px; margin-top:7px; display:none}
+  .err.show{display:block}
+  .ok{color:var(--accent); font-size:13.5px; margin-top:7px; display:none}
+  .ok.show{display:block}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:9px; cursor:pointer;
+    font-family:var(--font-body); font-weight:600; font-size:15px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+    padding:12px 18px; min-height:46px;
+    transition:transform .15s var(--ease), box-shadow .15s var(--ease), background .15s var(--ease);
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:var(--shadow)}
+  .btn:active{transform:translateY(0); box-shadow:none; background:#FBFAF6}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .btn.primary:hover{background:#285C44}
+  .btn.primary:active{background:#244F3B}
+  .btn.ghost{border-color:transparent; background:transparent; color:var(--accent)}
+  .btn.ghost:hover{background:var(--accent-soft); box-shadow:none}
+  .btn[disabled]{opacity:.55; cursor:not-allowed; transform:none!important; box-shadow:none!important}
+  .btn svg{flex:none}
+  .actions{display:flex; gap:11px; flex-wrap:wrap; margin-top:22px}
+
+  /* ── invite codes ───────────────────────────────────── */
+  .codes{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden}
+  .codes .row{display:flex; align-items:center; gap:12px; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface)}
+  .codes .row:first-child{border-top:0}
+  .codes .row:nth-child(even){background:#FBFAF5}
+  .codes .name{font-weight:600; font-size:14.5px; flex:1; display:flex; align-items:center; gap:9px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .codes .swatch{width:13px; height:13px; border-radius:4px; flex:none}
+  .codes .code{font-family:var(--font-mono); font-size:14px; letter-spacing:.08em; font-weight:600}
+  .codes .btn{min-height:38px; padding:7px 12px; font-size:12.5px}
+
+  /* ── ranking list ───────────────────────────────────── */
+  .rank{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface)}
+  .rank .emptyrow{padding:16px; color:var(--muted); font-size:14px}
+  .rank .item{
+    display:flex; align-items:center; gap:11px; padding:7px 9px 7px 15px;
+    border-top:1px solid var(--border); background:var(--surface); position:relative;
+    transition:background .15s var(--ease), transform .12s var(--ease), box-shadow .12s var(--ease);
+  }
+  .rank .item:first-child{border-top:0}
+  .rank .item.held{background:var(--accent-soft); transform:scale(1.012); box-shadow:var(--shadow-lift); z-index:2}
+  .rank .item.over::before{content:""; position:absolute; left:0; right:0; top:-2px; height:2px; background:var(--accent)}
+  .rank .ord{font-family:var(--font-mono); font-size:13px; color:var(--muted); width:16px; text-align:right}
+  .rank .nm{flex:1; font-weight:600; font-size:15.5px}
+  .rank .swatch{width:13px; height:13px; border-radius:4px; flex:none}
+  .rank .grip{color:#B4B0A2; cursor:grab; display:grid; place-items:center; padding:4px}
+  .mv{
+    width:40px; height:40px; border-radius:var(--radius-sm); cursor:pointer; flex:none;
+    display:grid; place-items:center; color:var(--ink);
+    background:#F1EFE7; border:1px solid var(--border);
+    transition:background .15s var(--ease), border-color .15s var(--ease), transform .1s var(--ease);
+  }
+  .mv:hover{background:var(--accent-soft); border-color:var(--accent)}
+  .mv:active{transform:scale(.93)}
+
+  /* ── house visuals (builder + results) ──────────────── */
+  .street{display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; margin-top:18px;
+    padding:26px 8px 10px; position:relative}
+  .street.full{margin-left:-26px; margin-right:-26px; padding-left:26px; padding-right:26px}
+  .street::after{content:""; position:absolute; left:0; right:0; bottom:0; height:10px;
+    background:linear-gradient(#8FB28C,#7BA47F); border-radius:0 0 9px 9px}
+  .street .bld{transition:transform .2s var(--ease)}
+  .street .bld:hover{transform:translateY(-3px)}
+  .bld{width:172px; text-align:center; position:relative}
+  .bld .roofwrap{position:relative; height:42px}
+  .bld .roofsvg{position:absolute; top:0; left:-8px; width:calc(100% + 16px); height:41px; display:block}
+  .bld .roofpath{fill:var(--accent)}
+  .bld .chim{fill:#C8C4B6; transition:fill .15s var(--ease)}
+  .bld .chim:hover{fill:var(--danger)}
+  .bld .plate{position:absolute; top:33px; left:11px; z-index:2; font-size:10px; font-weight:700;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--accent);
+    background:var(--surface); border:1px solid var(--border-strong); border-radius:999px; padding:2px 9px}
+  .bld .faces{background:#FBFAF5; border:1px solid var(--border); border-radius:9px; padding:8px; min-height:70px;
+    display:flex; flex-wrap:wrap; gap:6px; justify-content:center; align-content:flex-start;
+    box-shadow:inset 0 3px 0 rgba(27,28,24,.045), inset 0 -6px 0 #F0EDE3}
+  .tok{padding:5px 9px; border-radius:999px; font-size:12px; font-weight:600;
+    background:hsl(var(--h) 48% 90%); color:hsl(var(--h) 42% 26%); border:1px solid hsl(var(--h) 40% 79%);
+    white-space:nowrap; animation:fall .45s var(--ease) backwards}
+  .dot{width:28px; height:28px; border-radius:999px; font-size:10.5px; font-weight:700;
+    display:grid; place-items:center; background:hsl(var(--h) 48% 88%); color:hsl(var(--h) 42% 26%);
+    border:1.5px solid hsl(var(--h) 40% 74%); will-change:transform;
+    transition:transform .38s var(--ease)}
+  .dot.entering{animation:drop .4s var(--ease) backwards}
+  .dot.ghostdot{background:#F1EFE7; color:#B4B0A2; border-color:#E4E1D5}
+  @keyframes fall{from{opacity:0; transform:translateY(-9px) scale(.9)}}
+  @keyframes drop{from{opacity:0; transform:translateY(-9px) scale(.85)}}
+  .bld .meter{margin:8px 2px 0}
+  .bld .sc{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-bottom:4px}
+  .bar{height:7px; border-radius:999px; background:#EDEAE0; overflow:hidden}
+  .bar i{display:block; height:100%; width:0; background:hsl(var(--h) 42% 42%); border-radius:999px;
+    transition:width .9s var(--ease)}
+  .bld .slots{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; align-content:flex-start; min-height:42px; padding:2px}
+  .bld .stepper{display:flex; justify-content:center; align-items:center; gap:9px; margin-top:8px;
+    padding-top:7px; border-top:1.5px dashed var(--border)}
+  .bld .stepper .mv{width:34px; height:34px; font-size:16px}
+  .bld .stepper .sz{font-family:var(--font-display); font-weight:700; font-size:19px; min-width:24px}
+  .ground{position:relative}
+
+  /* ── layout builder ─────────────────────────────────── */
+  .presets{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+  .preset{cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--accent);
+    background:var(--accent-soft); border:1px solid transparent; border-radius:999px; padding:8px 14px;
+    transition:background .15s var(--ease), border-color .15s var(--ease), transform .1s var(--ease)}
+  .preset:hover{border-color:var(--accent)}
+  .preset:active{transform:scale(.96)}
+  .preset.on{background:var(--accent); color:var(--accent-ink)}
+  .street .adder{width:76px; min-height:150px; display:grid; place-items:center; cursor:pointer;
+    color:#A8A496; background:transparent; border:none; align-self:flex-end;
+    transition:color .15s var(--ease), transform .12s var(--ease)}
+  .street .adder:hover{color:var(--accent); transform:translateY(-2px)}
+  .street .adder:disabled{opacity:.35; cursor:not-allowed}
+  .street .adder svg{margin:0}
+  .lsum{display:flex; align-items:center; gap:9px; font-size:13.5px; margin-top:12px; min-height:22px}
+  .lsum.bad{color:var(--danger)}
+  .lsum.good{color:var(--accent)}
+
+  /* ── results cards ──────────────────────────────────── */
+  .opt{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:16px;
+    background:var(--surface); transition:box-shadow .2s var(--ease)}
+  .opt:hover{box-shadow:var(--shadow)}
+  .opt > .head{display:flex; align-items:baseline; gap:10px; padding:15px 22px 11px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#FCFBF7,#FFFFFF); flex-wrap:wrap}
+  .opt > .head .tag{font-family:var(--font-display); font-weight:700; font-size:17px}
+  .opt > .head .fair{margin-left:auto; font-size:13px; color:var(--muted)}
+  .opt .optstreet{padding:6px 18px 2px}
+
+  /* ── toast ──────────────────────────────────────────── */
+  #toast{
+    position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px);
+    background:var(--ink); color:#F4F2EA; font-size:13.5px; font-weight:500;
+    padding:11px 18px; border-radius:999px; box-shadow:var(--shadow-lift);
+    opacity:0; pointer-events:none; transition:opacity .25s var(--ease), transform .25s var(--ease);
+    z-index:50; max-width:88vw; text-align:center;
+  }
+  #toast.on{opacity:1; transform:translate(-50%,0)}
+
+  footer{padding:8px 0 44px; color:var(--muted); font-size:13px}
+  footer .line{border-top:1px solid var(--border); padding-top:18px; display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap}
+
+  @media (max-width:700px){
+    .choice{grid-template-columns:1fr}
+    .panel{padding:20px 17px}
+    .codes .row{padding:9px 11px}
+    .bld{width:142px}
+    .street{gap:11px}
+    .street.full{margin-left:-17px; margin-right:-17px; padding-left:17px; padding-right:17px}
+    .opt > .head{gap:4px 10px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important; animation:none!important}
+    .bar i{width:var(--w)!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand" id="brand-home" role="button" tabindex="0" aria-label="Back to the front page" title="Back to the front page">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2F6B4F"/><path d="M6 16l7-5.6L20 16v7.4a.6.6 0 0 1-.6.6h-3.9v-4.4h-2.4v4.4H6.6a.6.6 0 0 1-.6-.6z" fill="#F6F4EE"/><path d="M20.6 16.4l4.9-3.8 4.9 3.8v5.4c0 .4-.3.7-.7.7h-2.2v-2.9h-2.6v2.9h-2.2c-.4 0-.7-.3-.7-.7z" fill="#F6F4EE" opacity=".82"/></svg>
+      <div><strong>House&nbsp;Sort</strong><br><span>Any group, any houses, zero visible votes</span></div>
+    </div>
+    <div class="steps" aria-label="How it works">
+      <span class="step" data-step="1"><i>1</i>Set up the vote</span>
+      <span class="step" data-step="2"><i>2</i>Everyone ranks</span>
+      <span class="step" data-step="3"><i>3</i>Splits revealed</span>
+    </div>
+  </header>
+
+  <!-- ═══ pick a role ══════════════════════════════════════ -->
+  <section class="screen" id="sc-home">
+    <div class="gate">
+      <h1 data-enter>Pick the houses without picking fights</h1>
+      <p class="lede" data-enter>Everyone ranks the group in strict order. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
+      <div class="choice">
+        <button id="go-setup" type="button" data-enter>
+          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg>I'm running the vote</span>
+          <p>Name the roster, shape the houses, generate the key and codes, decode the chips.</p>
+        </button>
+        <button id="go-vote" type="button" data-enter>
+          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16V9l5-4 5 4v7"/><path d="M10 16v-4h4v4"/></svg>I'm voting</span>
+          <p>Open the group's round code, arrange your friends, post one encrypted chip.</p>
+        </button>
+        <button id="go-results" type="button" data-enter>
+          <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>See the splits</span>
+          <p>Paste the results code — then try any house layout you like, live.</p>
+        </button>
+      </div>
+      <div class="promise" data-enter>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.6" width="14" height="9.4" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.2" r="1.5"/></svg>
+        <span><strong>Nothing leaves your device unencrypted.</strong> Rankings never touch a server — the page does everything locally, chips open only with the one private key, and the results code carries only how strongly pairs of friends pull towards each other, never individual rankings.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ setup ════════════════════════════════════════════ -->
+  <section class="screen" id="sc-setup" hidden>
+    <div class="panel">
+      <h2>1 · The roster</h2>
+      <p class="sub">One name per line. These are the people splitting up — names are public, votes never are.</p>
+      <div class="field">
+        <label for="roster-ta">Who's moving into houses</label>
+        <textarea id="roster-ta" rows="9" spellcheck="false">Rufus
+Bradley
+Joe
+Chris
+Shadi
+Blythe
+Dawid
+Paulo</textarea>
+        <p class="hintline" id="roster-count"></p>
+        <p class="err" id="roster-err"></p>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-layout" hidden>
+      <h2>2 · The house layout</h2>
+      <p class="sub">How many houses, how many beds each. Tap a house to size it — the dots are just beds, the votes decide who sleeps in them.</p>
+      <div class="presets" id="presets" role="group" aria-label="Layout presets"></div>
+      <div class="street ground" id="builder" aria-live="polite"></div>
+      <p class="lsum" id="layout-sum"></p>
+      <p class="err" id="layout-err"></p>
+    </div>
+
+    <div class="panel" id="panel-key" hidden>
+      <h2>3 · Key, codes, and the round code</h2>
+      <p class="sub">Everything here exists only on this screen until you save or send it.</p>
+      <div class="field">
+        <label for="pp1">Choose a passphrase for the private key</label>
+        <div style="display:flex; gap:9px">
+          <input type="password" id="pp1" autocomplete="new-password" placeholder="12+ characters">
+          <button type="button" class="btn" id="pp1-eye" aria-label="Show passphrase" style="min-width:48px; flex:none">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+          </button>
+        </div>
+        <p class="hint">You'll pair this passphrase with a downloaded key file whenever you decode chips. Nothing is stored in this browser — the file is the key.</p>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn primary" id="btn-gen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-2z"/></svg>
+          <span>Generate key, codes &amp; round code</span>
+        </button>
+      </div>
+      <p class="err" id="gen-err"></p>
+
+      <div id="keyout" hidden>
+        <div class="field">
+          <h3>Round code — post this in the group chat</h3>
+          <p class="hint" style="margin-bottom:8px">Carries the public key, the roster and the layout. Anyone may see it; it encrypts chips to you and nothing else.</p>
+          <div style="display:flex; gap:9px">
+            <textarea id="roundout" readonly spellcheck="false" style="flex:1; min-height:120px"></textarea>
+            <button type="button" class="btn" id="cp-round" style="flex:none; align-self:flex-start">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              Copy
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <h3>Private invite codes — DM one to each person</h3>
+          <p class="hint" style="margin-bottom:8px">It doesn't encode preferences. Its only job is proving whose chip is whose, so doubles and fakes bounce.</p>
+          <div class="codes" id="codeslist"></div>
+        </div>
+        <div class="field">
+          <h3>Key file — download and keep it somewhere safe</h3>
+          <p class="hint">Passphrase-encrypted private key + invite codes. Password manager, USB stick — anywhere a screenshot isn't. Close this tab and no readable copy exists.</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="btn-savekey">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Download key file
+          </button>
+          <button type="button" class="btn" id="btn-done-setup">Chips are in — reveal the splits</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ vote ══════════════════════════════════════════════ -->
+  <section class="screen" id="sc-vote" hidden>
+    <div class="panel">
+      <h2>Cast your vote</h2>
+      <p class="sub">Encrypted on this screen; only the key holder can ever open it.</p>
+      <div class="field">
+        <label for="vin-round">Round code from the group chat</label>
+        <textarea id="vin-round" rows="5" spellcheck="false" placeholder="H44S1-…"></textarea>
+        <p class="hintline" id="vin-status">Waiting for the round code — the group-chat message starting H44S1-</p>
+        <p class="ok" id="vin-pub-ok"></p>
+        <p class="err" id="vin-pub-err"></p>
+      </div>
+      <div id="vin-form" hidden>
+        <div class="field">
+          <label for="vin-name">Who are you?</label>
+          <select id="vin-name"><option value="">Pick your own name…</option></select>
+          <p class="hint">Only used to leave yourself out of the ranking — your name never enters the chip.</p>
+        </div>
+        <div class="field">
+          <label for="vin-code">Your private invite code</label>
+          <input type="text" id="vin-code" maxlength="8" autocomplete="off" spellcheck="false" placeholder="e.g. K4Q7XP" style="width:220px; text-transform:uppercase; font-family:var(--font-mono); letter-spacing:.07em">
+          <p class="hint">The one the organiser DM'd you — alone it says nothing about preferences. Not the round code.</p>
+        </div>
+        <div class="actions" style="margin-top:18px">
+          <button type="button" class="btn primary" id="btn-checkin">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11l5 5L20 6"/><path d="M4 20h16"/></svg>
+            <span>Check in &amp; start ranking</span>
+          </button>
+        </div>
+        <p class="err" id="vin-start-err"></p>
+        <div id="vin-rank" hidden>
+          <div class="field">
+            <label id="ranklabel">Order the others — top is who you want most</label>
+            <div class="rank" id="ranklist" role="listbox" aria-labelledby="ranklabel"></div>
+            <p class="hint" id="rankhint">Drag anywhere, or use the arrows. Strict order is the anti-gaming rule: one #1, one #2 … one bottom, no ties. Boosting someone means dropping someone.</p>
+            <p class="err" id="vin-chip-err"></p>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn primary" id="btn-chip">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+              <span>Create my chip</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="chipout" hidden>
+      <h2>Your chip is ready</h2>
+      <div class="field">
+        <label for="chip-txt">Post this in the group chat (one chip per person)</label>
+        <textarea id="chip-txt" rows="7" readonly spellcheck="false"></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="cp-chip">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          Copy chip
+        </button>
+        <button type="button" class="btn ghost" id="re-rank">Change my ranking</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ reveal ════════════════════════════════════════════ -->
+  <section class="screen" id="sc-reveal" hidden>
+    <div class="panel">
+      <h2>Decode the chips</h2>
+      <p class="sub">All the chips from the chat, plus your key file. Ballots decrypt in memory only — nothing readable is rendered, stored, or sent.</p>
+      <div class="field">
+        <label for="rf">Key file</label>
+        <input type="text" id="rf" readonly placeholder="No file chosen" style="font-size:14px; color:var(--muted)">
+        <input type="file" id="keyfile" accept=".json,application/json" hidden>
+        <div style="margin-top:8px"><button type="button" class="btn" id="btn-pickfile">Choose key file…</button></div>
+      </div>
+      <div class="field">
+        <label for="pp2">Key passphrase</label>
+        <input type="password" id="pp2" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="chips-in">The chips (paste the messages straight from chat)</label>
+        <textarea id="chips-in" rows="8" spellcheck="false" placeholder="H44C1-…"></textarea>
+        <p class="hint" id="chipcount"></p>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn primary" id="btn-reveal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6c-2.4 0-4.4-.9-6-2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          <span>Reveal arrangements</span>
+        </button>
+      </div>
+      <p class="err" id="rev-err"></p>
+    </div>
+    <div class="panel" id="results" hidden></div>
+  </section>
+
+  <!-- ═══ results viewer ════════════════════════════════════ -->
+  <section class="screen" id="sc-results" hidden>
+    <div class="panel">
+      <h2>See the splits</h2>
+      <p class="sub">Paste the results code from the group chat. It carries how strongly each pair pulled together — never an individual ballot, ever.</p>
+      <div class="field">
+        <label for="rcin">Results code</label>
+        <textarea id="rcin" rows="7" spellcheck="false" placeholder="H44R1-…"></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn primary" id="btn-open-results">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
+          <span>Show the splits</span>
+        </button>
+      </div>
+      <p class="err" id="res-err"></p>
+    </div>
+    <div class="panel" id="resview" hidden></div>
+  </section>
+
+  <footer>
+    <div class="line">
+      <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
+      <span>House Sort · build 2026-11-09</span>
+    </div>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ═════════ constants & helpers ═════════ */
+const CHIP_PREFIX   = "H44C1-";  // encrypted ballot chip
+const ROUND_PREFIX  = "H44S1-";  // public round setup: pub key + roster + layout
+const RESULTS_PREFIX= "H44R1-";  // shareable aggregate results (pair weights, no ballots)
+const B64U = "[A-Za-z0-9_-]+";
+const CHIP_RE    = new RegExp(CHIP_PREFIX + B64U, "g");
+const ROUND_RE   = new RegExp(ROUND_PREFIX + B64U, "g");
+const RESULTS_RE = new RegExp(RESULTS_PREFIX + B64U, "g");
+const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   // no 0/O/1/I lookalikes
+const HUES = [12, 36, 58, 96, 162, 194, 214, 340];        // person colours (violet-free)
+const MAX_NAMES = 20, MAX_HOUSES = 6, MIN_HOUSE_SIZE = 2, MAX_HOUSE_SIZE = 9;
+const ENUM_CAP = 60000, SAMPLE_N = 30000;
+const $ = (id) => document.getElementById(id);
+const hasCrypto = !!(window.crypto && window.crypto.subtle);
+
+const b64parts = (u8) => { let s=""; for (let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode(...u8.subarray(i,i+0x8000)); return s; };
+const toB64u = (u8) => btoa(b64parts(u8)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const fromB64u = (s) => {
+  const t = s.replace(/-/g,"+").replace(/_/g,"/") + "=".repeat((4 - s.length % 4) % 4);
+  const bin = atob(t);
+  const u8 = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+  return u8;
+};
+const packJSON = (obj, prefix) => prefix + toB64u(new TextEncoder().encode(JSON.stringify(obj)));
+const unpackJSON = (code, prefix) => JSON.parse(new TextDecoder().decode(fromB64u(code.slice(prefix.length))));
+
+function toast(msg, ms=2400){
+  const t=$("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove("on"), ms);
+}
+function randCode(){
+  const n=CODE_ALPHABET.length, r=new Uint32Array(6);
+  crypto.getRandomValues(r);
+  return Array.from(r,x=>CODE_ALPHABET[(x>>>0)%n]).join("");
+}
+function copyText(text, msg){
+  navigator.clipboard.writeText(text).then(()=>toast(msg||"Copied"))
+    .catch(()=>{ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); ta.remove(); toast(msg||"Copied"); });
+}
+const initials = (name) => (name.trim().split(/\s+/).map(w=>w[0]).join("").toUpperCase() || "?").slice(0,2);
+function hueOf(name){
+  let h=7; for (const c of name) h=((h*31)+c.codePointAt(0))>>>0;
+  return HUES[h%HUES.length];
+}
+const fmtLayout = (l) => l.join(" + ");
+
+if(!hasCrypto){
+  document.querySelector(".gate .lede").insertAdjacentHTML("afterend",
+    `<div class="promise" style="margin-top:18px"><span>This browser lacks Web Crypto, so the tool refuses to run rather than weaken encryption. Open the page over https — put the file on GitHub Pages or Netlify, or serve it locally.</span></div>`);
+}
+
+/* ═════════ router ═════════ */
+function show(id){
+  for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results"]) $(s).hidden = (s!==id);
+  const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
+  document.querySelectorAll(".step").forEach(el=>{
+    el.classList.toggle("on", step!=null && +el.dataset.step===step);
+    el.classList.toggle("done", step!=null && +el.dataset.step<step);
+  });
+  window.scrollTo(0,0);
+}
+$("go-setup").onclick = () => { if(hasCrypto){ initSetup(); show("sc-setup"); } };
+$("go-vote").onclick  = () => { if(hasCrypto){ resetVote(); show("sc-vote"); } };
+$("go-results").onclick = () => { if(hasCrypto){ resetViewer(); show("sc-results"); } };
+$("btn-done-setup").onclick = () => { resetReveal(); show("sc-reveal"); };
+
+/* the logo goes back to the front page; a freshly minted but unsaved key needs one confirm */
+let keySaved = false;
+function goHome(){
+  if (keyJson && !keySaved &&
+      !confirm("Leave without downloading the key file? Once this tab closes, that key is gone and everyone's invite codes would change if you regenerate.")) return;
+  show("sc-home");
+}
+$("brand-home").onclick = goHome;
+$("brand-home").addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
+
+/* ═════════ crypto plumbing ═════════ */
+async function generatePair(){
+  const kp = await crypto.subtle.generateKey(
+    {name:"RSA-OAEP", modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:"SHA-256"},
+    true, ["encrypt","decrypt"]);
+  return {
+    pub:  await crypto.subtle.exportKey("spki", kp.publicKey),
+    priv: await crypto.subtle.exportKey("pkcs8", kp.privateKey)
+  };
+}
+const importPub  = (spki)  => crypto.subtle.importKey("spki",  spki,  {name:"RSA-OAEP", hash:"SHA-256"}, false, ["encrypt"]);
+const importPriv = (pkcs8) => crypto.subtle.importKey("pkcs8", pkcs8, {name:"RSA-OAEP", hash:"SHA-256"}, false, ["decrypt"]);
+
+async function deriveAES(pass, salt){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:310000, hash:"SHA-256"}, base,
+    {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function sealKey(priv, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const k = await deriveAES(pass, salt);
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, k, priv);
+  return { salt: toB64u(salt), iv: toB64u(iv), ct: toB64u(new Uint8Array(ct)) };
+}
+async function openKey(enc, pass){
+  const k = await deriveAES(pass, fromB64u(enc.salt));
+  return crypto.subtle.decrypt({name:"AES-GCM", iv: fromB64u(enc.iv)}, k, fromB64u(enc.ct));
+}
+
+/* ═════════ setup: roster ═════════ */
+let roster=[], layout=[], keyJson=null;
+
+function parseRoster(){
+  const raw=$("roster-ta").value.split(/\r?\n|,/).map(s=>s.trim()).filter(Boolean);
+  const err=$("roster-err"); err.classList.remove("show");
+  const seen=new Set(), names=[];
+  for (const n of raw){
+    const key=n.toLowerCase();
+    if(seen.has(key)){ err.textContent=`"${n}" appears twice — one name each, please.`; err.classList.add("show"); return null; }
+    if(n.length>24){ err.textContent=`"${n}" is a bit long — keep names under 24 characters.`; err.classList.add("show"); return null; }
+    seen.add(key); names.push(n);
+  }
+  if(names.length<4){ err.textContent="You need at least 4 people — houses start making sense from there."; err.classList.add("show"); return null; }
+  if(names.length>MAX_NAMES){ err.textContent=`Up to ${MAX_NAMES} people per round for now.`; err.classList.add("show"); return null; }
+  $("roster-count").textContent = `${names.length} people on the roster.`;
+  return names;
+}
+$("roster-ta").addEventListener("input", ()=>{
+  const names=parseRoster();
+  keyJson=null; $("keyout").hidden=true; $("panel-key").hidden=true;
+  if(!names){ $("panel-layout").hidden=true; return; }
+  roster=names;
+  layout=normaliseLayout(names.length, presetsFor(names.length)[0] || [names.length-2,2]);
+  if(!layout) layout=[names.length>=6?names.length-2:names.length/2, names.length>=6?2:names.length/2];
+  renderPresets("setup"); setupStreet(false);
+  $("panel-layout").hidden=false;
+  $("panel-key").hidden=false;   // roster + layout are set, so key generation is reachable
+});
+
+/* ═════════ layout maths ═════════ */
+function normaliseLayout(n, sizes){
+  let l=sizes.filter(s=>s>=MIN_HOUSE_SIZE).slice(0,MAX_HOUSES).map(s=>Math.min(s,MAX_HOUSE_SIZE));
+  let sum=l.reduce((a,b)=>a+b,0);
+  while(sum>n && l.length>1){
+    const i=l.indexOf(Math.max(...l));
+    if(l[i]-1<MIN_HOUSE_SIZE) break;
+    l[i]--; sum--;
+  }
+  while(sum<n){
+    const i=l.indexOf(Math.min(...l.filter(x=>x<MAX_HOUSE_SIZE)));
+    if(i<0) break;
+    l[i]++; sum++;
+  }
+  return l.length>=2 && sum===n ? l : null;
+}
+function presetsFor(n){
+  const list=[];
+  for(let h=2;h<=Math.min(4, Math.floor(n/2)); h++){
+    const base=Math.floor(n/h), extra=n-base*h;
+    const sizes=Array.from({length:h},(_,i)=>base+(i<extra?1:0));
+    if(sizes.every(s=>s>=MIN_HOUSE_SIZE && s<=MAX_HOUSE_SIZE)) list.push(sizes);
+  }
+  // lopsided 2-house shapes too (3 + 5 instead of 4 + 4, and so on)
+  for(let a=MIN_HOUSE_SIZE; a<=Math.min(MAX_HOUSE_SIZE, n-a); a++){
+    const b=n-a;
+    if(b<MIN_HOUSE_SIZE || b>MAX_HOUSE_SIZE || b<a) continue;
+    const canon=p=>p.slice().sort((x,y)=>y-x).join(".");
+    if(!list.some(q=>canon(q)===canon([a,b]))) list.push([a,b]);
+  }
+  return list.slice(0,6);
+}
+function countPartitions(n, sizes){
+  const sorted=[...sizes].sort((a,b)=>b-a);
+  let den=1n, facts=Array(n+1).fill(1n);
+  for(let i=1;i<=n;i++) facts[i]=facts[i-1]*BigInt(i);
+  den=facts[n];
+  for(const s of sorted) den/=facts[s];
+  const seen=new Map();
+  for(const s of sorted) seen.set(s,(seen.get(s)||0)+1);
+  for(const [,m] of seen) den/=BigInt(m);
+  return Number(den);
+}
+/* unordered house partitions, exactly once each; null if too many to enumerate */
+function enumeratePartitions(n, sizes){
+  let cap=countPartitions(n,sizes);
+  if(cap>ENUM_CAP) return null;
+  const out=[];
+  const open=[];                                  // {size, cap, mem[]}
+  const remaining=[...sizes].sort((a,b)=>b-a);
+  (function rec(p){
+    if(out.length>cap) return;                    // safety net
+    if(p===n){
+      if(remaining.length===0 && open.every(h=>h.cap===0))
+        out.push(open.map(h=>h.mem.slice()));
+      return;
+    }
+    for(const h of open){                         // join an open house
+      if(h.cap>0){ h.mem.push(p); h.cap--; rec(p+1); h.cap++; h.mem.pop(); }
+    }
+    const tried=new Set();                        // open a new house (distinct sizes only)
+    for(let i=0;i<remaining.length;i++){
+      const s=remaining[i];
+      if(tried.has(s)) continue; tried.add(s);
+      remaining.splice(i,1);
+      const h={size:s, cap:s-1, mem:[p]};
+      open.push(h); rec(p+1); open.pop(); remaining.splice(i,0,s);
+    }
+  })(0);
+  const seenKeys=new Set(), fin=[];               // canonical safety net
+  for(const pt of out){
+    const key=pt.map(m=>m.slice().sort((a,b)=>a-b).join(".")).sort().join("|");
+    if(!seenKeys.has(key)){ seenKeys.add(key); fin.push(pt); }
+  }
+  return fin;
+}
+/* random deals when the exact space is too big to walk */
+function samplePartitions(n, sizes, k=SAMPLE_N){
+  const seenKeys=new Set(), out=[];
+  let attempts=0;
+  while(out.length<k && attempts<k*2){
+    attempts++;
+    const order=Array.from({length:n},(_,i)=>i);
+    for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+    const pt=[]; let idx=0;
+    for(const s of [...sizes].sort((a,b)=>b-a)){
+      const h=[]; for(let i=0;i<s;i++) h.push(order[idx++]);
+      pt.push(h);
+    }
+    const key=pt.map(m=>m.slice().sort((a,b)=>a-b).join(".")).sort().join("|");
+    if(!seenKeys.has(key)){ seenKeys.add(key); out.push(pt); }
+  }
+  return out;
+}
+
+/* ═════════ scoring ═════════ */
+function weightsFromBallots(ballots, n){
+  const strength={};
+  ballots.forEach(bl=>{ strength[bl.me]={}; bl.order.forEach((j,p)=>{ strength[bl.me][j]=(n-1)-p; }); });
+  const w=Array.from({length:n},()=>Array(n).fill(0));
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    const m=Math.min(strength[i][j], strength[j][i]);
+    w[i][j]=w[j][i]=m;
+  }
+  return w;
+}
+function personScores(house, w){
+  return house.map(i=>{
+    let s=0;
+    house.forEach(j=>{ if(j!==i) s+=w[i][j]; });
+    return house.length>1 ? s/(house.length-1) : 0;
+  });
+}
+function scorePartition(pt, w, n){
+  const per=pt.map(h=>personScores(h,w));
+  const all=[].concat(...per);
+  return { pt, per, worst:Math.min(...all), mean:all.reduce((s,x)=>s+x,0)/n };
+}
+function bestOf(parts, w, n, count=3){
+  const scored=parts.map(pt=>scorePartition(pt,w,n));
+  scored.sort((a,b)=> (b.worst-a.worst) || (b.mean-a.mean));
+  const top=scored.slice(0,count);
+  top.forEach(o=>{
+    o.hpc=o.per.map(ps=>Math.round(ps.reduce((s,x)=>s+x,0)/ps.length/(n-1)*100));
+    o.even=Math.round(o.mean/(n-1)*100);
+    o.weak=Math.round(o.worst/(n-1)*100);
+    // houses shown big-house-first, members inside roster order
+    const order=o.pt.map((_,i)=>i).sort((a,b)=> o.pt[b].length-o.pt[a].length || a-b);
+    o.houses=order.map(i=>o.pt[i].slice().sort((a,b)=>a-b));
+    o.hpc=order.map(i=>o.hpc[i]);
+  });
+  return top;
+}
+
+/* ═════════ house visuals ═════════ */
+function captureDots(container){
+  const m=new Map();
+  container.querySelectorAll(".dot[data-p]").forEach(d=>{
+    const r=d.getBoundingClientRect();
+    m.set(d.dataset.p, {x:r.left,y:r.top,w:r.width});
+  });
+  return m;
+}
+function playDots(container, before){
+  if(!before) return;
+  container.querySelectorAll(".dot[data-p]").forEach(d=>{
+    const b=before.get(d.dataset.p);
+    if(!b){ d.classList.add("entering"); return; }
+    const r=d.getBoundingClientRect();
+    const dx=b.x-r.left, dy=b.y-r.top;
+    if(Math.abs(dx)>1||Math.abs(dy)>1){
+      d.style.transition="none"; d.style.transform=`translate(${dx}px,${dy}px)`;
+      requestAnimationFrame(()=>{ d.style.transition=""; d.style.transform=""; });
+    }
+  });
+}
+
+/* a full street of houses; houses = [{members:[ix], pct?}], mode "dots"|"tokens" */
+function renderStreet(box, roster, houses, {mode="tokens", meters=false, staggerBase=0, flipFrom=null}={}){
+  const flipSince = flipFrom!==null ? flipFrom : captureDots(box);
+  box.querySelectorAll(".bld, .adder").forEach(e=>e.remove());
+  houses.forEach((h,hi)=>{
+    const bld=document.createElement("div"); bld.className="bld"; bld.dataset.hi=hi;
+    const faces=document.createElement("div"); faces.className="faces";
+    if(mode==="dots"){
+      const slots=document.createElement("div"); slots.className="slots";
+      h.members.forEach((ix,k)=>{
+        const d=document.createElement("span");
+        d.className="dot"; d.dataset.p=ix;
+        d.style.setProperty("--h", hueOf(roster[ix]));
+        d.textContent=roster[ix][0].toUpperCase();
+        d.title=roster[ix];
+        if(k===0 && staggerBase>0) d.style.animationDelay=(staggerBase+hi*70)+"ms";
+        slots.appendChild(d);
+      });
+      faces.appendChild(slots);
+    } else {
+      h.members.forEach((ix,k)=>{
+        const t=document.createElement("span");
+        t.className="tok"; t.style.setProperty("--h", hueOf(roster[ix]));
+        t.style.animationDelay=(staggerBase+k*55+hi*90)+"ms";
+        t.textContent=roster[ix];
+        faces.appendChild(t);
+      });
+    }
+    if(meters && h.pct!=null){
+      const m=document.createElement("div"); m.className="meter";
+      m.innerHTML=`<div class="sc"><span>house average</span><span>${h.pct}%</span></div>
+        <div class="bar"><i style="--h:${hueOf(roster[h.members[0]]||roster[0])};--w:${h.pct}%"></i></div>`;
+      bld.appendChild(m);
+    }
+    const plate=document.createElement("div"); plate.className="plate"; plate.textContent="House "+(hi+1);
+    const roofwrap=document.createElement("div"); roofwrap.className="roofwrap";
+    // house silhouette as one SVG: chimney behind the roof plane, eaves overhanging the walls
+    roofwrap.innerHTML=`<svg class="roofsvg" viewBox="0 0 174 41" aria-hidden="true">
+      <rect class="chim" x="119" y="5" width="11" height="28" rx="2"/>
+      <path class="roofpath" d="M87 0 L174 41 L0 41 Z"/>
+    </svg>`;
+    bld.prepend(faces);     // faces, meter
+    bld.prepend(plate);     // plate, faces, meter
+    bld.prepend(roofwrap);  // roof, plate, faces, meter
+    box.appendChild(bld);
+  });
+  playDots(box, flipSince);
+  box.querySelectorAll(".bar i").forEach(i=>{ requestAnimationFrame(()=>{ i.style.width=i.style.getPropertyValue("--w"); }); });
+}
+
+const GHOST_HOUSE = `<svg width="46" height="44" viewBox="0 0 60 50" aria-hidden="true" fill="none"
+  stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M7 19 L30 3 L53 19" stroke-dasharray="4 3.5"/>
+  <path d="M13 16 V46 H47 V16" stroke-dasharray="4 3.5"/>
+  <path d="M24 31 h12 M30 25 v12"/>
+</svg>`;
+
+/* ═════════ setup: layout builder ═════════ */
+function renderPresets(mode){
+  const n = mode==="setup" ? roster.length : viewer.n;
+  const box = mode==="setup" ? $("presets") : $("vp-presets");
+  box.innerHTML="";
+  presetsFor(n).forEach(p=>{
+    const cur=mode==="setup"?layout:viewer.layout;
+    const b=document.createElement("button");
+    b.type="button"; b.className="preset"+(p.every((s,i)=>s===cur[i])?" on":"");
+    b.innerHTML=`<svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 7 L6 1 L11 7 Z" fill="currentColor" opacity=".85"/></svg><span>${p.join(" + ")}</span>`;
+    b.setAttribute("aria-label", b.textContent.replaceAll(" + "," plus ")+" houses");
+    b.onclick=()=>{
+      if(mode==="setup"){ layout=p.slice(); renderPresets("setup"); setupStreet(true); renderLayoutSum(); }
+      else { viewer.setLayout(p.slice()); }
+    };
+    box.appendChild(b);
+  });
+}
+function addHouseFeasible(l){ return l.length<MAX_HOUSES && Math.max(...l) >= MIN_HOUSE_SIZE*2; }
+function canGrow(l, hi){ return l[hi]<MAX_HOUSE_SIZE; }
+function canShrink(l, hi){ return l[hi]>MIN_HOUSE_SIZE || l.length>2; }
+/* the layout is always kept summing to exactly n: + pulls a bed from the fullest other house */
+function growHouse(l, hi, n){
+  let donor=-1, biggest=-1;
+  l.forEach((s,i)=>{ if(i!==hi && s>biggest){ biggest=s; donor=i; } });
+  if(donor<0 || l[donor]<=MIN_HOUSE_SIZE || l[hi]>=MAX_HOUSE_SIZE) return false;
+  l[donor]--; l[hi]++;
+  return true;
+}
+function shrinkHouse(l, hi){
+  let taker=-1, smallest=1e9;
+  l.forEach((s,i)=>{ if(i!==hi && s<smallest){ smallest=s; taker=i; } });
+  if(taker<0 || l[taker]>=MAX_HOUSE_SIZE || l[hi]<=MIN_HOUSE_SIZE) return false;
+  if(l.length===2 && l[hi]<=MIN_HOUSE_SIZE) return false;
+  l[hi]--; l[taker]++;
+  return true;
+}
+function removeHouse(l, hi){
+  if(l.length<=2) return false;
+  const s=l[hi];
+  const rest=l.filter((_,i)=>i!==hi);
+  // spread the house's beds over the rest, respecting the 9-bed cap; may be impossible
+  const room=rest.reduce((a,x)=>a+(MAX_HOUSE_SIZE-x),0);
+  if(room<s) return false;
+  let left=s;
+  while(left>0){
+    let best=-1, smallest=1e9;           // give to the smallest house with capacity
+    rest.forEach((x,i)=>{ if(x<MAX_HOUSE_SIZE && x<smallest){ smallest=x; best=i; } });
+    rest[best]++; left--;
+  }
+  return {rest};
+}
+function dealPreview(names, l){
+  const houses=l.map(()=>[]);
+  let i=0;
+  l.forEach((s,hi)=>{ for(let k=0;k<s && i<names.length;k++,i++) houses[hi].push(i); });
+  return houses;
+}
+function setupStreet(animate){
+  const box=$("builder");
+  box.classList.add("full");
+  const dealt=dealPreview(roster, layout);
+  const houses=layout.map((s,hi)=>({members:dealt[hi]}));
+  // steppers live outside renderStreet; simpler: render street then append stepper bars
+  renderStreet(box, roster, houses, {mode:"dots", staggerBase: animate?80:0});
+  box.querySelectorAll(".bld").forEach((bld,hi)=>{
+    const st=document.createElement("div"); st.className="stepper";
+    const minus=document.createElement("button"); minus.type="button"; minus.className="mv"; minus.textContent="−";
+    minus.setAttribute("aria-label",`Remove a bed from house ${hi+1}`);
+    minus.disabled = !canShrink(layout,hi);
+    minus.onclick=()=>{ const l=layout.slice(); if(shrinkHouse(l,hi)){ layout=l; syncSetupLayout(); } };
+    const sz=document.createElement("span"); sz.className="sz"; sz.textContent=layout[hi];
+    const plus=document.createElement("button"); plus.type="button"; plus.className="mv"; plus.textContent="+";
+    plus.setAttribute("aria-label",`Add a bed to house ${hi+1}`);
+    plus.disabled = !canGrow(layout,hi) || !growHouse(layout.slice(),hi,roster.length);
+    plus.onclick=()=>{ const l=layout.slice(); if(growHouse(l,hi,roster.length)){ layout=l; syncSetupLayout(); } };
+    const x=document.createElement("button"); x.type="button"; x.className="mv"; x.textContent="🗑"; x.title="Remove this house";
+    x.setAttribute("aria-label",`Remove house ${hi+1}`);
+    x.style.fontSize="14px";
+    x.disabled = layout.length<=2;
+    x.onclick=()=>{ const r=removeHouse(layout,hi); if(!r) return; layout=r.rest; syncSetupLayout(); };
+    st.append(minus,sz,plus,x);
+    bld.appendChild(st);
+  });
+  const adder=document.createElement("button"); adder.type="button"; adder.className="adder";
+  adder.setAttribute("aria-label","Add a house");
+  adder.innerHTML=GHOST_HOUSE;
+  adder.disabled=!addHouseFeasible(layout);
+  adder.onclick=()=>{ const l=layout.slice(); const hi=l.indexOf(Math.max(...l)); l[hi]-=MIN_HOUSE_SIZE; layout=[...l, MIN_HOUSE_SIZE]; syncSetupLayout(); };
+  box.appendChild(adder);
+  renderLayoutSum();
+  renderPresets("setup");
+}
+function syncSetupLayout(){
+  roster=parseRoster()||roster;
+  setupStreet(false);
+}
+function renderLayoutSum(){
+  const sum=layout.reduce((a,b)=>a+b,0);
+  const el=$("layout-sum");
+  if(sum===roster.length && layout.length>=2){
+    el.className="lsum good";
+    el.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg> ${roster.length} beds across ${layout.length} houses — ${fmtLayout(layout)}`;
+    $("layout-err").classList.remove("show");
+  } else {
+    el.className="lsum bad";
+    el.textContent=`${sum} of ${roster.length} beds placed — adjust the houses.`;
+  }
+}
+
+/* ═════════ setup: key + codes + round code ═════════ */
+function initSetup(){
+  if(!$("roster-ta").value.trim()) $("roster-ta").value=["Rufus","Bradley","Joe","Chris","Shadi","Blythe","Dawid","Paulo"].join("\n");
+  $("roster-ta").dispatchEvent(new Event("input"));
+  keyJson=null; $("keyout").hidden=true;
+  $("pp1").value="";
+  $("gen-err").classList.remove("show");
+}
+$("pp1-eye").onclick=()=>{ const f=$("pp1"); f.type = f.type==="password"?"text":"password"; };
+
+$("btn-gen").onclick=async ()=>{
+  const err=$("gen-err"); err.classList.remove("show");
+  const pass=$("pp1").value;
+  if(!pass||pass.length<8){ err.textContent="A passphrase of at least 8 characters — the private key is only as strong as it."; err.classList.add("show"); return; }
+  if(!layout || layout.length<2 || layout.reduce((a,b)=>a+b,0)!==roster.length){ err.textContent="Fix the house layout above first."; err.classList.add("show"); return; }
+  const b=$("btn-gen"), label=b.querySelector("span");
+  b.disabled=true; const old=label.textContent; label.textContent="Generating…";
+  try{
+    const {pub,priv}=await generatePair();
+    const enc=await sealKey(priv,pass);
+    const codes=roster.map((_,m)=>({c:randCode(), m}));
+    keyJson={ app:"house-sort", v:3, made:new Date().toISOString(),
+      roster: roster.slice(), layout: layout.slice(), pub: toB64u(new Uint8Array(pub)), codes, enc };
+    keySaved = false;
+    const round=packJSON({v:1, roster:roster.slice(), layout:layout.slice(), pub:keyJson.pub}, ROUND_PREFIX);
+    keyJson.round=round;
+    $("roundout").value=round;
+    const list=$("codeslist"); list.innerHTML="";
+    roster.forEach((name,i)=>{
+      const row=document.createElement("div"); row.className="row";
+      row.innerHTML=`<span class="name"><span class="swatch" style="background:hsl(${hueOf(name)} 45% 70%)"></span>${name}</span><span class="code">${codes[i].c}</span>`;
+      const dm=document.createElement("button"); dm.type="button"; dm.className="btn"; dm.textContent="DM line";
+      dm.onclick=()=>copyText(`${name}, your invite code is ${codes[i].c} — keep it to yourself, never post it.`, "DM line copied — send it privately");
+      row.appendChild(dm); list.appendChild(row);
+    });
+    $("keyout").hidden=false;
+    $("keyout").scrollIntoView({behavior:"smooth", block:"start"});
+  }catch(e){
+    err.textContent="Key generation failed: "+e.message; err.classList.add("show");
+  }finally{ b.disabled=false; label.textContent=old; }
+};
+$("btn-savekey").onclick=()=>{
+  if(!keyJson) return;
+  download("house-sort-key.json", JSON.stringify(keyJson,null,2));
+  keySaved = true;
+  toast("Key file saved — it never lived in this browser");
+};
+function download(name, text){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([text],{type:"application/json"}));
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$("cp-round").onclick=()=>copyText($("roundout").value,"Round code copied — post it in the chat");
+
+/* ═════════ vote screen ═════════ */
+let vRound=null, vPub=null, vRoster=[], vLayout=[], myIx=-1;
+
+function resetVote(){
+  $("vin-round").value=""; $("vin-pub-ok").classList.remove("show"); $("vin-pub-err").classList.remove("show");
+  $("vin-form").hidden=true; $("chipout").hidden=true; $("vin-chip-err").classList.remove("show");
+  $("vin-status").textContent="Waiting for the round code — the group-chat message starting H44S1-";
+  $("vin-code").value=""; vRound=null; vPub=null; vRoster=[]; vLayout=[]; myIx=-1;
+}
+$("vin-round").addEventListener("input", async ()=>{
+  const ok=$("vin-pub-ok"), er=$("vin-pub-err"), st=$("vin-status");
+  ok.classList.remove("show"); er.classList.remove("show");
+  vRound=null; vPub=null; $("vin-form").hidden=true; $("vin-rank").hidden=true;
+  const t=$("vin-round").value;
+  const m=(t.match(ROUND_RE)||[])[0];
+  if(!m){
+    if(t.includes(RESULTS_PREFIX))
+      st.textContent="That's a results code (H44R1-) — for viewing splits. You need the ROUND code (H44S1-) the organiser posted at the start.";
+    else if(t.includes(CHIP_PREFIX))
+      st.textContent="Those are ballot chips — the round code is the message that starts H44S1-";
+    else
+      st.textContent=`Waiting for the round code — the group-chat message starting ${ROUND_PREFIX}`;
+    return;
+  }
+  try{
+    const o=unpackJSON(m, ROUND_PREFIX);
+    if(o.v!==1 || !Array.isArray(o.roster) || !Array.isArray(o.layout) || typeof o.pub!=="string") throw new Error("shape");
+    if(o.roster.length<4 || new Set(o.roster.map(x=>x.toLowerCase())).size!==o.roster.length) throw new Error("roster");
+    if(o.layout.length<2 || o.layout.some(s=>s<MIN_HOUSE_SIZE) || o.layout.reduce((a,b)=>a+b,0)!==o.roster.length) throw new Error("layout");
+    vPub=await importPub(fromB64u(o.pub));
+    vRoster=o.roster;
+    vLayout=o.layout;
+    vRound={roster:o.roster, layout:o.layout, pub:o.pub};
+    $("vin-pub-ok").textContent=`Round code opens: ${vRoster.length} people, houses ${fmtLayout(vLayout)}.`;
+    ok.classList.add("show");
+    st.textContent="";
+    const sel=$("vin-name");
+    sel.innerHTML=`<option value="">Pick your own name…</option>`;
+    vRoster.forEach((n,i)=>{ const opt=document.createElement("option"); opt.value=n; opt.textContent=n; opt.dataset.ix=i; sel.appendChild(opt); });
+    $("vin-form").hidden=false;
+  }catch(e){
+    er.textContent="That round code is damaged — copy the whole message from the group chat again.";
+    er.classList.add("show");
+  }
+});
+$("vin-name").addEventListener("change", ()=>{
+  const ix=$("vin-name").selectedIndex-1;   // -1 = placeholder
+  myIx=ix; $("chipout").hidden=true; $("vin-chip-err").classList.remove("show");
+  $("vin-rank").hidden=true;               // check in again after switching person
+  $("vin-start-err").classList.remove("show");
+  const list=$("ranklist"); list.innerHTML="";
+  if(ix<0){ list.innerHTML=`<div class="emptyrow">Pick your own name above.</div>`; return; }
+  vRoster.forEach((nm,i)=>{
+    if(i===ix) return;
+    const item=document.createElement("div"); item.className="item"; item.draggable=true;
+    item.setAttribute("role","option"); item.dataset.i=i;
+    item.innerHTML=`<span class="ord"></span><span class="swatch" style="background:hsl(${hueOf(nm)} 45% 70%)"></span><span class="nm">${nm}</span>
+      <span class="grip" title="Drag to reorder" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></span>
+      <button type="button" class="mv" data-dir="-1" aria-label="Move ${nm} up"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
+      <button type="button" class="mv" data-dir="1" aria-label="Move ${nm} down"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>`;
+    list.appendChild(item);
+  });
+  wireRank(); paintOrder(); autoCheckin();
+});
+$("btn-checkin").onclick=()=>{
+  const err=$("vin-start-err"); err.classList.remove("show");
+  if(myIx<0){ err.textContent="Pick your own name first — the ranking skips you."; err.classList.add("show"); return; }
+  const code=$("vin-code").value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){ err.textContent="Your invite code is 6 letters/digits, like K4Q7XP."; err.classList.add("show"); $("vin-code").focus(); return; }
+  $("vin-rank").hidden=false;
+};
+/* as soon as name + a well-formed code are both in, reveal the ranking — no submit click needed */
+function autoCheckin(){
+  if(myIx<0) return;
+  if(!/^[A-Z0-9]{6}$/.test($("vin-code").value.trim().toUpperCase())) return;
+  $("vin-start-err").classList.remove("show");
+  $("vin-rank").hidden=false;
+}
+$("vin-code").addEventListener("input", autoCheckin);
+$("vin-code").addEventListener("keydown",(e)=>{ if(e.key==="Enter") $("btn-checkin").click(); });
+
+function wireRank(){
+  const list=$("ranklist"); let held=null;
+  list.querySelectorAll(".item").forEach(item=>{
+    item.querySelectorAll(".mv").forEach(b=>{
+      b.onclick=(e)=>{ e.stopPropagation(); moveItem(item,+b.dataset.dir); };
+    });
+    item.addEventListener("dragstart",(e)=>{ held=item; item.classList.add("held"); e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",""); });
+    item.addEventListener("dragend",()=>{ held=null; item.classList.remove("held"); list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); });
+    item.addEventListener("dragover",(e)=>{ e.preventDefault(); list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); if(item!==held) item.classList.add("over"); });
+    item.addEventListener("dragleave",()=>item.classList.remove("over"));
+    item.addEventListener("drop",(e)=>{ e.preventDefault(); if(held&&held!==item){ item.parentNode.insertBefore(held,item); paintOrder(); } list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); });
+  });
+}
+function moveItem(item,dir){
+  if(dir<0 && item.previousElementSibling) item.parentNode.insertBefore(item,item.previousElementSibling);
+  if(dir>0 && item.nextElementSibling) item.parentNode.insertBefore(item.nextElementSibling,item);
+  paintOrder();
+}
+function paintOrder(){ $("ranklist").querySelectorAll(".item").forEach((it,i)=>{ it.querySelector(".ord").textContent=i+1; }); }
+
+$("btn-chip").onclick=async ()=>{
+  const err=$("vin-chip-err"), fail=(m)=>{ err.textContent=m; err.classList.add("show"); return; };
+  err.classList.remove("show");
+  const code=$("vin-code").value.trim().toUpperCase();
+  if(!vPub) return fail("Open the round code first.");
+  if(myIx<0) return fail("Pick your own name first — the ranking skips you.");
+  if(!/^[A-Z0-9]{6}$/.test(code)) return fail("Your invite code is 6 letters/digits, like K4Q7XP.");
+  const items=[...$("ranklist").children];
+  if(items.length!==vRoster.length-1) return fail("Rank the others first.");
+  const order=items.map(it=>+it.dataset.i);
+  const b=$("btn-chip"), label=b.querySelector("span");
+  b.disabled=true; const old=label.textContent; label.textContent="Encrypting…";
+  try{
+    const payload={v:2, code, me:myIx, order};
+    const data=new TextEncoder().encode(JSON.stringify(payload));
+    const ct=await crypto.subtle.encrypt({name:"RSA-OAEP"}, vPub, data);
+    const chip=CHIP_PREFIX+toB64u(new Uint8Array(ct));
+    $("chip-txt").value=chip;
+    $("chipout").hidden=false;
+    $("chipout").scrollIntoView({behavior:"smooth", block:"center"});
+    toast("Chip encrypted — ready for the group chat");
+  }catch(e){ fail("Encryption failed: "+e.message); }
+  finally{ b.disabled=false; label.textContent=old; }
+};
+$("re-rank").onclick=()=>{ $("chipout").hidden=true; $("ranklist").scrollIntoView({behavior:"smooth", block:"center"}); };
+$("cp-chip").onclick=()=>copyText($("chip-txt").value,"Chip copied — post it in the chat, once");
+
+/* ═════════ reveal screen ═════════ */
+let keyFile=null, privKey=null, lastResults=null;
+
+function resetReveal(){
+  $("rf").value=""; keyFile=null; privKey=null; lastResults=null;
+  $("pp2").value=""; $("chips-in").value=""; $("chipcount").textContent="";
+  $("rev-err").classList.remove("show"); $("results").hidden=true;
+}
+$("btn-pickfile").onclick=()=>$("keyfile").click();
+$("keyfile").addEventListener("change",(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ keyFile=r.result; $("rf").value=f.name; };
+  r.onerror=()=>{ keyFile=null; $("rf").value=""; };
+  r.readAsText(f);
+});
+$("chips-in").addEventListener("input",()=>{
+  const found=[...new Set($("chips-in").value.match(CHIP_RE)||[])];
+  $("chipcount").textContent=found.length?`${found.length} chip${found.length===1?"":"s"} pasted`:"";
+});
+$("btn-reveal").onclick=async ()=>{
+  const err=$("rev-err"); err.classList.remove("show"); err.textContent="";
+  $("results").hidden=true;
+  try{
+    if(!keyFile) throw new Error("Choose your key file first.");
+    let pack;
+    try{ pack=JSON.parse(keyFile); }catch{ throw new Error("That file isn't valid JSON — is it the House Sort key file?"); }
+    if(!pack || !pack.enc || !pack.pub || !Array.isArray(pack.codes) || !Array.isArray(pack.roster) || !Array.isArray(pack.layout))
+      throw new Error("That file isn't a House Sort key file.");
+    const n=pack.roster.length;
+    const privBuf=await openKey(pack.enc,$("pp2").value).catch(()=>{ throw new Error("Wrong passphrase — try again."); });
+    privKey=await importPriv(privBuf);
+
+    const chips=[...new Set($("chips-in").value.match(CHIP_RE)||[])];
+    if(chips.length<n) throw new Error(`Found ${chips.length} chip${chips.length===1?"":"s"} — need all ${n}.`);
+    const ballots=[], problems=[], done=new Set();
+    for(const c of chips){
+      try{
+        const pt=await crypto.subtle.decrypt({name:"RSA-OAEP"}, privKey, fromB64u(c.slice(CHIP_PREFIX.length)));
+        const bl=JSON.parse(new TextDecoder().decode(pt));
+        if(bl.v!==2 || !bl.code || !Number.isInteger(bl.me)) throw new Error("malformed ballot");
+        const home=pack.codes.find(x=>x.c===bl.code);
+        if(!home) throw new Error(`unknown invite code ${bl.code}`);
+        if(done.has(bl.code)) throw new Error(`chip for code ${bl.code} appears twice`);
+        if(home.m!==bl.me) throw new Error(`code ${bl.code} arrived under the wrong name`);
+        const others=new Set(Array.from({length:n},(_,i)=>i).filter(i=>i!==bl.me));
+        if(!Array.isArray(bl.order) || bl.order.length!==n-1 || new Set(bl.order).size!==n-1 || bl.order.some(i=>!others.has(i)))
+          throw new Error(`malformed ranking for code ${bl.code}`);
+        done.add(bl.code); ballots.push(bl);
+      }catch(e){ problems.push(e.message); }
+    }
+    if(problems.length) throw new Error("Not decoded: "+problems.join(" · "));
+    const missing=pack.codes.filter(x=>!done.has(x.c)).map(x=>pack.roster[x.m]);
+    if(missing.length) throw new Error("Still waiting on chips from: "+missing.join(", "));
+
+    const w=weightsFromBallots(ballots,n);
+    const parts=enumeratePartitions(n, pack.layout) ?? samplePartitions(n, pack.layout);
+    const top=bestOf(parts, w, n, 3);
+    lastResults={ roster:pack.roster.slice(), layout:pack.layout.slice(), w };
+    renderRevealResults($("results"), lastResults, top);
+  }catch(e){
+    err.textContent=e.message; err.classList.add("show");
+  }
+};
+function renderRevealResults(box, res, top){
+  box.innerHTML=""; box.hidden=false;
+  const head=document.createElement("div");
+  head.innerHTML=`<h2>The fairest splits for ${fmtLayout(res.layout)}</h2>
+    <p class="sub">Ranked by the unhappiest household member first — nobody's parked as collateral. Post the results code, not the scores.</p>`;
+  box.appendChild(head);
+  renderTopCards(el => box.appendChild(el), res, top);
+  const wrap=document.createElement("div"); wrap.className="field";
+  wrap.innerHTML=`<label for="rcout">Results code for the group chat — opens for everyone, needs no key</label>
+    <textarea id="rcout" rows="5" readonly spellcheck="false"></textarea>
+    <p class="hint">Contains only the roster, the layout and how strongly pairs of friends pulled together — no individual rankings, ever.</p>`;
+  const acts=document.createElement("div"); acts.className="actions";
+  const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy results code";
+  const rc=packJSON(resultsPayload(res), RESULTS_PREFIX);
+  wrap.querySelector("textarea").value=rc;
+  cb.onclick=()=>copyText(rc,"Results code copied — paste it in the chat");
+  const play=document.createElement("button"); play.type="button"; play.className="btn"; play.textContent="Try other layouts";
+  play.onclick=()=>{ $("rcin").value=rc; openViewer(rc); };
+  acts.append(cb,play);
+  wrap.appendChild(acts);
+  box.appendChild(wrap);
+  box.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function resultsPayload(res){
+  return { v:1, roster:res.roster, layout:res.layout, w:res.w };
+}
+/* top-3 cards used by reveal + viewer */
+function renderTopCards(append, res, top, boxGetter){
+  top.forEach((op,idx)=>{
+    const card=document.createElement("div"); card.className="opt";
+    card.innerHTML=`<div class="head"><span class="tag">Option ${idx+1}</span>
+      <span class="fair">evenness ${op.even}% · weakest link ${op.weak}%</span></div>
+      <div class="optstreet"><div class="street ground"></div></div>`;
+    append(card);
+    const street=card.querySelector(".street");
+    renderStreet(street, res.roster, op.houses.map((m,i)=>({members:m, pct:op.hpc[i]})), {mode:"tokens", meters:true, staggerBase:idx*160});
+  });
+}
+
+/* ═════════ results viewer ═════════ */
+const viewer={ n:0, roster:[], w:null, layout:[], setLayout(l){ viewer.layout=l; viewerRender(false); } };
+
+function resetViewer(){ $("rcin").value=""; $("res-err").classList.remove("show"); $("resview").hidden=true; }
+
+$("btn-open-results").onclick=()=>{
+  const err=$("res-err"); err.classList.remove("show");
+  const m=($("rcin").value.match(RESULTS_RE)||[])[0];
+  if(!m){ err.textContent="Paste the results code — it starts H44R1- (the organiser posted it in the chat)."; err.classList.add("show"); return; }
+  try{ openViewer(m); }
+  catch(e){ err.textContent="That results code didn't open: "+e.message; err.classList.add("show"); }
+};
+function openViewer(code){
+  let res;
+  try{ res=unpackJSON(code, RESULTS_PREFIX); }
+  catch{ throw new Error("damaged — copy the whole code again from the chat"); }
+  if(res.v!==1 || !Array.isArray(res.roster) || !Array.isArray(res.layout) || !Array.isArray(res.w))
+    throw new Error("unexpected shape");
+  const n=res.roster.length;
+  if(!Array.isArray(res.w) || res.w.length!==n || res.w.some(row=>!Array.isArray(row)||row.length!==n)) throw new Error("bad matrix");
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    if(i===j){ if(res.w[i][j]!==0) throw new Error("bad matrix"); }
+    else if(res.w[i][j]!==res.w[j][i] || res.w[i][j]<0 || res.w[i][j]>n-1) throw new Error("bad matrix");
+  }
+  if(res.layout.length<2 || res.layout.reduce((a,b)=>a+b,0)!==n || res.layout.some(s=>s<1)) throw new Error("bad layout");
+  viewer.n=n; viewer.roster=res.roster; viewer.w=res.w;
+  viewer.layout=normaliseLayout(n,res.layout) || res.layout;
+  viewer.baseLayout=res.layout.slice();
+  $("res-err").classList.remove("show");
+  viewerRender(true);
+  $("resview").hidden=false;
+  $("resview").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function viewerRender(animate){
+  const box=$("resview");
+  if(box.dataset.ready!=="1"){
+    box.innerHTML=`
+      <div id="vp-cards"></div>
+      <h3 style="margin-top:26px">Try a different split</h3>
+      <p class="sub">Move beds between houses — the best groupings recompute instantly, from the pulls between pairs alone. No revote needed.</p>
+      <div class="presets" id="vp-presets" role="group" aria-label="Layout presets"></div>
+      <div class="street ground full" id="vp-builder" aria-live="polite"></div>
+      <p class="lsum" id="vp-sum"></p>`;
+    box.dataset.ready="1";
+  }
+  const parts = enumeratePartitions(viewer.n, viewer.layout) ?? samplePartitions(viewer.n, viewer.layout);
+  const top = bestOf(parts, viewer.w, viewer.n, 3);
+
+  const cards=box.querySelector("#vp-cards");
+  const head=document.createElement("div");
+  head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
+    <p class="sub">Ranked by the unhappiest household member first.</p>`;
+  cards.innerHTML=""; cards.appendChild(head);
+  renderTopCards(c=>cards.appendChild(c), viewer, top, ()=>box);
+
+  // playground: option 1 as the standing arrangement
+  const vb=$("vp-builder");
+  const before=captureDots(vb);
+  renderStreet(vb, viewer.roster, top[0].houses.map((m,i)=>({members:m, pct:top[0].hpc[i]})), {mode:"dots", meters:true});
+  vb.querySelectorAll(".bld").forEach((bld,hi)=>{
+    const st=document.createElement("div"); st.className="stepper";
+    const minus=document.createElement("button"); minus.type="button"; minus.className="mv"; minus.textContent="−";
+    minus.setAttribute("aria-label",`Move a bed out of house ${hi+1}`);
+    const l=viewer.layout.slice();
+    minus.disabled=!shrinkHouse(l,hi);
+    minus.onclick=()=>{ const nl=viewer.layout.slice(); if(shrinkHouse(nl,hi)) viewer.setLayout(nl); };
+    const sz=document.createElement("span"); sz.className="sz"; sz.textContent=viewer.layout[hi];
+    const plus=document.createElement("button"); plus.type="button"; plus.className="mv"; plus.textContent="+";
+    plus.setAttribute("aria-label",`Move a bed into house ${hi+1}`);
+    const l2=viewer.layout.slice();
+    plus.disabled=!growHouse(l2,hi,viewer.n);
+    plus.onclick=()=>{ const nl=viewer.layout.slice(); if(growHouse(nl,hi,viewer.n)) viewer.setLayout(nl); };
+    const x=document.createElement("button"); x.type="button"; x.className="mv"; x.textContent="🗑"; x.style.fontSize="14px";
+    x.setAttribute("aria-label",`Remove house ${hi+1} — its people spread into the others`);
+    x.disabled=viewer.layout.length<=2 || !removeHouse(viewer.layout.slice(),hi);
+    x.onclick=()=>{ const r=removeHouse(viewer.layout.slice(),hi); if(r) viewer.setLayout(r.rest); };
+    st.append(minus,sz,plus,x);
+    bld.appendChild(st);
+  });
+  const adder=document.createElement("button"); adder.type="button"; adder.className="adder";
+  adder.setAttribute("aria-label","Add a house");
+  adder.innerHTML=GHOST_HOUSE;
+  adder.disabled=!addHouseFeasible(viewer.layout);
+  adder.onclick=()=>{ const l=viewer.layout.slice(); const hi=l.indexOf(Math.max(...l)); l[hi]-=MIN_HOUSE_SIZE; viewer.setLayout([...l,MIN_HOUSE_SIZE]); };
+  vb.appendChild(adder);
+
+  const sum=$("vp-sum");
+  const s=viewer.layout.reduce((a,b)=>a+b,0);
+  sum.className="lsum good";
+  sum.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg> ${viewer.n} people across ${viewer.layout.length} houses — ${fmtLayout(viewer.layout)}`;
+
+  // extra groupings text under the cards
+  const extra=box.querySelector("#vp-copyrow");
+  if(extra) extra.remove();
+  const best=top[0];
+  const text=`House Sort — best split for ${fmtLayout(viewer.layout)}\n` + best.houses.map((m,i)=>`House ${i+1}: ${m.map(ix=>viewer.roster[ix]).join(", ")}`).join("\n");
+  const wrap=document.createElement("div"); wrap.className="field"; wrap.id="vp-copyrow";
+  wrap.innerHTML=`<label for="vpcopy">Groupings for the chat</label>
+    <textarea id="vpcopy" rows="4" readonly spellcheck="false">${text}</textarea>`;
+  const acts=document.createElement("div"); acts.className="actions";
+  const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy groupings";
+  cb.onclick=()=>copyText(text,"Copied — paste the groupings in the chat");
+  acts.appendChild(cb); wrap.appendChild(acts);
+  box.appendChild(wrap);
+  renderPresets("viewer");
+  setTimeout(()=>document.querySelectorAll("#resview .bar i").forEach(i=>{ i.style.width=i.style.getPropertyValue("--w"); }),80);
+}
+</script>
+</body>
+</html>

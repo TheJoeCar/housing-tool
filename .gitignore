@@ -1,0 +1,2 @@
+# local browser-automation logs (dev only, not part of the tool)
+.playwright-cli/

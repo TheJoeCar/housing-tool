@@ -13,7 +13,11 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 **The organiser:**
 
 1. Open the tool → *I'm running the vote*.
-2. Type the roster (one name per line) and shape the houses (presets, ± steppers, add/remove).
+2. Type the roster (one name per line), shape the houses (presets, ± steppers, add/remove), and
+   pick how many people may share a preference **row** — *No ties* (strict, strongest
+   anti-gaming), or shelves of up to 2 / 3 / 4 (tied shelves pull slightly weaker each, so big
+   "don't care" groups self-dampen). The rule travels inside the round code; chips are
+   validated against it.
 3. Choose a passphrase → **Generate key, codes & round code**. You get three things:
    - the **round code** (`H44S1-…`) — post it in the group chat. It's public: it carries the
      roster, the layout and the public key, nothing else.
@@ -31,8 +35,10 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 1. Open the tool → *I'm voting* → paste the round code from the chat.
 2. Pick your own name (it never enters the chip), paste your invite code → **Check in & start
    ranking**.
-3. Drag the others into strict order — #1 is who you want most. No ties: to raise someone you
-   must drop someone.
+3. Drag the bubbles into the rows — the top row is who you want most. Rows can hold more than
+   one person only when the organiser allows ties; people sharing a row count as tied, and a
+   bigger row pulls a little weaker per person, so a large "don't mind" group can't dominate.
+   Arrows on each bubble move people row by row if you'd rather not drag.
 4. **Create my chip** → copy the encrypted gibberish → post it in the chat. Done.
 
 **Anyone:**

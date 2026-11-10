@@ -142,21 +142,85 @@
   .codes .code{font-family:var(--font-mono); font-size:14px; letter-spacing:.08em; font-weight:600}
   .codes .btn{min-height:38px; padding:7px 12px; font-size:12.5px}
 
-  /* ── ranking list ───────────────────────────────────── */
-  .rank{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface)}
-  .rank .emptyrow{padding:16px; color:var(--muted); font-size:14px}
-  .rank .item{
-    display:flex; align-items:center; gap:11px; padding:7px 9px 7px 15px;
-    border-top:1px solid var(--border); background:var(--surface); position:relative;
-    transition:background .15s var(--ease), transform .12s var(--ease), box-shadow .12s var(--ease);
+  /* ── tie-policy segment (setup) ──────────────────────── */
+  .tie-line{margin-top:17px; padding-top:15px; border-top:1.5px dashed var(--border)}
+  .tie-label{font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted)}
+  .tieseg{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap}
+  .tieseg .segb{
+    cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+    padding:8px 13px 7px; border-radius:12px; border:1.5px solid var(--border);
+    background:var(--surface); color:var(--ink);
+    transition:border-color .15s var(--ease), background .15s var(--ease), transform .1s var(--ease), box-shadow .15s var(--ease);
   }
-  .rank .item:first-child{border-top:0}
-  .rank .item.held{background:var(--accent-soft); transform:scale(1.012); box-shadow:var(--shadow-lift); z-index:2}
-  .rank .item.over::before{content:""; position:absolute; left:0; right:0; top:-2px; height:2px; background:var(--accent)}
-  .rank .ord{font-family:var(--font-mono); font-size:13px; color:var(--muted); width:16px; text-align:right}
-  .rank .nm{flex:1; font-weight:600; font-size:15.5px}
-  .rank .swatch{width:13px; height:13px; border-radius:4px; flex:none}
-  .rank .grip{color:#B4B0A2; cursor:grab; display:grid; place-items:center; padding:4px}
+  .tieseg .segb .segsym{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.05em; color:var(--muted); transition:color .15s var(--ease)}
+  .tieseg .segb span:last-child{font-size:12.5px; font-weight:600}
+  .tieseg .segb:hover{border-color:var(--accent); transform:translateY(-1px)}
+  .tieseg .segb:active{transform:scale(.96)}
+  .tieseg .segb.on{background:var(--accent); border-color:var(--accent); color:#F4F2EA; box-shadow:var(--shadow-lift)}
+  .tieseg .segb.on .segsym{color:rgba(244,242,234,.75)}
+
+  /* ── ranking board: shelves + floating bubbles ───────── */
+  .board{border:1px solid var(--border); border-radius:var(--radius-sm); background:
+      linear-gradient(var(--surface),var(--surface)) padding-box;
+      display:block; overflow:hidden; user-select:none; touch-action:none}
+  .shelves{display:flex; flex-direction:column; gap:8px; padding:14px 14px 6px; min-height:56px}
+  .shelf{
+    display:flex; align-items:center; gap:10px; min-height:56px;
+    border:1.5px dashed #CCC8B9; border-radius:var(--radius-sm); padding:5px 10px;
+    background:rgba(255,255,255,.45);
+    transition:border-color .15s var(--ease), background .15s var(--ease), box-shadow .15s var(--ease);
+  }
+  .shelf:hover{border-color:#B7B2A0}
+  .shelf.drop{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px rgba(91,107,84,.14)}
+  .shelf .lvl{
+    font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--muted);
+    width:30px; flex:none; text-align:center; border-right:1px solid var(--border); padding:4px 8px 4px 0}
+  .shelf .slot{flex:1; display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:46px}
+  .shelf .slot:empty::before{content:"…"; color:#C4C0B2; font-size:13px; padding-left:4px}
+  .pool{
+    border-top:1.5px dashed var(--border); padding:12px 14px 14px; display:flex; flex-wrap:wrap; gap:9px;
+    align-items:center; min-height:66px; background:#F4F2EA; position:relative;
+    transition:background .15s var(--ease), box-shadow .15s var(--ease)}
+  .pool.drop{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent)}
+  .poolhint{width:100%; color:var(--muted); font-size:13px; margin-bottom:-2px}
+  .bub{
+    --h:210; display:inline-flex; align-items:center; gap:7px; cursor:grab; touch-action:none;
+    border-radius:999px; padding:8px 13px 8px 9px; position:relative;
+    background:hsl(var(--h) 42% 88%); border:1px solid hsl(var(--h) 30% 66%);
+    box-shadow:0 1.5px 4px rgba(27,28,24,.14), 0 6px 14px -7px hsl(var(--h) 30% 45% / .5);
+    font-weight:600; font-size:14.5px; color:hsl(var(--h) 45% 24%);
+    transition:transform .16s var(--ease), box-shadow .16s var(--ease), background .15s var(--ease);
+  }
+  .bub .bw{display:inline-flex; align-items:center; gap:7px}
+  .bub .nmw{display:inline-block; animation:bob 3.4s ease-in-out infinite}
+  .bub:nth-child(2) .nmw{animation-delay:-.9s}
+  .bub:nth-child(3) .nmw{animation-delay:-2.1s}
+  .bub.settled .nmw{animation:none}
+  .bub::before{content:""; width:17px; height:17px; border-radius:999px; flex:none;
+    background:hsl(var(--h) 45% 62%); box-shadow:inset 0 -3px 5px hsl(var(--h) 45% 40% / .5)}
+  .bub:hover{transform:translateY(-1.5px) scale(1.03); box-shadow:0 3px 7px rgba(27,28,24,.16), 0 10px 20px -8px hsl(var(--h) 30% 45% / .55)}
+  .bub:active{cursor:grabbing}
+  .bub.fly{animation:none; transition:none; position:fixed; z-index:30; pointer-events:none;
+    transform:scale(1.09); box-shadow:0 5px 12px rgba(27,28,24,.22), 0 16px 30px -10px hsl(var(--h) 30% 40% / .6);
+    cursor:grabbing}
+  .bub.fly .nmw{animation:none}
+  .bub .tiechip{position:absolute; top:-8px; right:-7px; background:var(--accent); color:#F4F2EA;
+    border-radius:999px; font-size:9.5px; font-weight:700; padding:2px 6px; letter-spacing:.03em; box-shadow:0 1px 3px rgba(27,28,24,.3)}
+  @keyframes bob{0%,100%{transform:translateY(-1.6px)} 50%{transform:translateY(1.6px)}}
+  @keyframes pop{0%{transform:scale(1.14)} 60%{transform:scale(.965)} 100%{transform:scale(1)}}
+  .bub .mini{display:flex; gap:3px; margin-left:2px}
+  .bub .mini button{
+    width:26px; height:26px; border-radius:8px; cursor:pointer; display:grid; place-items:center;
+    color:hsl(var(--h) 40% 30%); background:rgba(255,255,255,.72); border:1px solid hsl(var(--h) 28% 72%);
+    transition:background .15s var(--ease), transform .1s var(--ease)}
+  .bub .mini button:hover{background:#fff; transform:scale(1.08)}
+  .bub .mini button:active{transform:scale(.9)}
+  .bub .mini button.tie{font-weight:700; font-size:12.5px}
+  .shelf.drop .bub .mini{visibility:hidden}
+  .pool .bub .mini{opacity:.55}   /* pool arrows subdued until hover, still clickable */
+  .pool .bub:hover .mini, .pool .bub:focus-within .mini{opacity:1}
+  @media (hover:none){ .bub .mini{display:flex} .pool .bub .mini{opacity:.55} }
+
   .mv{
     width:40px; height:40px; border-radius:var(--radius-sm); cursor:pointer; flex:none;
     display:grid; place-items:center; color:var(--ink);
@@ -258,6 +322,13 @@
     .street{gap:11px}
     .street.full{margin-left:-17px; margin-right:-17px; padding-left:17px; padding-right:17px}
     .opt > .head{gap:4px 10px}
+    .shelves{padding:10px 10px 4px; gap:7px}
+    .shelf{min-height:48px; padding:4px 7px; gap:8px}
+    .shelf .lvl{font-size:16px; width:24px; padding-right:6px}
+    .bub{font-size:13.5px; padding:7px 10px 7px 7px}
+    .pool{padding:10px 10px 12px}
+    .tieseg{gap:4px}
+    .tieseg .segb{padding:7px 10px 6px}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important; animation:none!important}
@@ -283,7 +354,7 @@
   <section class="screen" id="sc-home">
     <div class="gate">
       <h1 data-enter>Pick the houses without picking fights</h1>
-      <p class="lede" data-enter>Everyone ranks the group in strict order. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
+      <p class="lede" data-enter>Everyone ranks the group — strict order, or the tie levels the organiser picked. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
       <div class="choice">
         <button id="go-setup" type="button" data-enter>
           <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg>I'm running the vote</span>
@@ -332,6 +403,16 @@ Paulo</textarea>
       <div class="street ground" id="builder" aria-live="polite"></div>
       <p class="lsum" id="layout-sum"></p>
       <p class="err" id="layout-err"></p>
+      <div class="tie-line">
+        <span class="tie-label" id="tie-label">Ties</span>
+        <div class="tieseg" id="tieseg" role="group" aria-label="Are same-rank ties allowed">
+          <button type="button" class="segb" data-cap="1"><span class="segsym">A·B·C·D</span><span>No ties</span></button>
+          <button type="button" class="segb" data-cap="2"><span class="segsym">A·B=C·D</span><span>Pairs</span></button>
+          <button type="button" class="segb" data-cap="3"><span class="segsym">A·B=C=D</span><span>Trio</span></button>
+          <button type="button" class="segb" data-cap="4"><span class="segsym">A·B=C=D=E</span><span>Up to 4</span></button>
+        </div>
+        <p class="hintline" id="tie-hint"></p>
+      </div>
     </div>
 
     <div class="panel" id="panel-key" hidden>
@@ -419,9 +500,14 @@ Paulo</textarea>
         <p class="err" id="vin-start-err"></p>
         <div id="vin-rank" hidden>
           <div class="field">
-            <label id="ranklabel">Order the others — top is who you want most</label>
-            <div class="rank" id="ranklist" role="listbox" aria-labelledby="ranklabel"></div>
-            <p class="hint" id="rankhint">Drag anywhere, or use the arrows. Strict order is the anti-gaming rule: one #1, one #2 … one bottom, no ties. Boosting someone means dropping someone.</p>
+            <label id="ranklabel">Rank the others — the top shelf is who you want most</label>
+            <div class="board" id="board" role="listbox" aria-labelledby="ranklabel">
+              <div class="shelves" id="shelves"></div>
+              <div class="pool" id="pool" aria-label="Not yet ranked">
+                <div class="poolhint" id="poolhint">Drag everyone up into the rows above — highest row wins</div>
+              </div>
+            </div>
+            <p class="hint" id="rankhint"></p>
             <p class="err" id="vin-chip-err"></p>
           </div>
           <div class="actions">
@@ -503,7 +589,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-09</span>
+      <span>House Sort · build 2026-11-10</span>
     </div>
   </footer>
 </div>
@@ -650,6 +736,30 @@ $("roster-ta").addEventListener("input", ()=>{
   $("panel-key").hidden=false;   // roster + layout are set, so key generation is reachable
 });
 
+/* ═════════ tie policy (organiser chooses how much sameness is allowed) ═════════ */
+let tieCap=1;   // max people allowed on one shelf; 1 = strict no-ties
+const TIE_HINTS={
+  1:"Strict order — everyone separate. Strongest anti-gaming guarantee.",
+  2:"One shared shelf at a time (pairs). Small spill of “no feeling either way” is honest info.",
+  3:"Shelves up to three. Bigger shelf = weaker pull each, so big groups self-dampen.",
+  4:"Shelves up to four. Works, but four way “don't care” starts hiding real preferences.",
+};
+function syncTieUI(){
+  $("tieseg").querySelectorAll(".segb").forEach(b=>b.classList.toggle("on", +b.dataset.cap===tieCap));
+  $("tie-hint").textContent=TIE_HINTS[tieCap]||TIE_HINTS[4];
+}
+$("tieseg").addEventListener("click",(e)=>{
+  const b=e.target.closest(".segb"); if(!b) return;
+  tieCap=+b.dataset.cap;
+  syncTieUI();
+  keyJson=null; $("keyout").hidden=true; $("panel-key").hidden=true;
+  // roster + layout are still set: the key simply has to be regenerated with the new policy
+  if(roster.length>=4 && layout.reduce((a,b)=>a+b,0)===roster.length){
+    $("panel-key").hidden=false;
+    $("panel-key").scrollIntoView({behavior:"smooth", block:"start"});
+  }
+});
+
 /* ═════════ layout maths ═════════ */
 function normaliseLayout(n, sizes){
   let l=sizes.filter(s=>s>=MIN_HOUSE_SIZE).slice(0,MAX_HOUSES).map(s=>Math.min(s,MAX_HOUSE_SIZE));
@@ -746,9 +856,24 @@ function samplePartitions(n, sizes, k=SAMPLE_N){
 }
 
 /* ═════════ scoring ═════════ */
+/* ballots: v2 = strict order[], v3 = ties[[..]] shelves. Pull uses adjusted-fractional
+   positions: a tie group of k occupying slots p..p+k-1 gives every member avg rank. */
+function ballotLevel(bl){
+  if(bl.v===3 && Array.isArray(bl.ties)) return bl.ties;
+  if(Array.isArray(bl.order)) return bl.order.map(i=>[i]);
+  return null;
+}
 function weightsFromBallots(ballots, n){
   const strength={};
-  ballots.forEach(bl=>{ strength[bl.me]={}; bl.order.forEach((j,p)=>{ strength[bl.me][j]=(n-1)-p; }); });
+  ballots.forEach(bl=>{
+    strength[bl.me]={};
+    const gs=ballotLevel(bl);
+    let p=0;
+    gs.forEach(g=>{
+      const frac=p+(g.length-1)/2; p+=g.length;
+      g.forEach(j=>{ strength[bl.me][j]=(n-1)-frac; });
+    });
+  });
   const w=Array.from({length:n},()=>Array(n).fill(0));
   for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
     const m=Math.min(strength[i][j], strength[j][i]);
@@ -846,7 +971,7 @@ function renderStreet(box, roster, houses, {mode="tokens", meters=false, stagger
     // house silhouette as one SVG: chimney behind the roof plane, eaves overhanging the walls
     roofwrap.innerHTML=`<svg class="roofsvg" viewBox="0 0 174 41" aria-hidden="true">
       <rect class="chim" x="119" y="5" width="11" height="28" rx="2"/>
-      <path class="roofpath" d="M87 0 L174 41 L0 41 Z"/>
+      <path class="roofpath" d="M4 41 L3.6 39.3 L79.8 3.4 Q87 -0.4 94.2 3.4 L170.4 39.3 Q174 41 170 41 L4 41 Q0 41 3.6 39.3 Z"/>
     </svg>`;
     bld.prepend(faces);     // faces, meter
     bld.prepend(plate);     // plate, faces, meter
@@ -978,6 +1103,7 @@ function renderLayoutSum(){
 function initSetup(){
   if(!$("roster-ta").value.trim()) $("roster-ta").value=["Rufus","Bradley","Joe","Chris","Shadi","Blythe","Dawid","Paulo"].join("\n");
   $("roster-ta").dispatchEvent(new Event("input"));
+  syncTieUI();
   keyJson=null; $("keyout").hidden=true;
   $("pp1").value="";
   $("gen-err").classList.remove("show");
@@ -995,10 +1121,10 @@ $("btn-gen").onclick=async ()=>{
     const {pub,priv}=await generatePair();
     const enc=await sealKey(priv,pass);
     const codes=roster.map((_,m)=>({c:randCode(), m}));
-    keyJson={ app:"house-sort", v:3, made:new Date().toISOString(),
-      roster: roster.slice(), layout: layout.slice(), pub: toB64u(new Uint8Array(pub)), codes, enc };
+    keyJson={ app:"house-sort", v:4, made:new Date().toISOString(),
+      roster: roster.slice(), layout: layout.slice(), t:tieCap, pub: toB64u(new Uint8Array(pub)), codes, enc };
     keySaved = false;
-    const round=packJSON({v:1, roster:roster.slice(), layout:layout.slice(), pub:keyJson.pub}, ROUND_PREFIX);
+    const round=packJSON({v:1, roster:roster.slice(), layout:layout.slice(), t:tieCap, pub:keyJson.pub}, ROUND_PREFIX);
     keyJson.round=round;
     $("roundout").value=round;
     const list=$("codeslist"); list.innerHTML="";
@@ -1030,13 +1156,13 @@ function download(name, text){
 $("cp-round").onclick=()=>copyText($("roundout").value,"Round code copied — post it in the chat");
 
 /* ═════════ vote screen ═════════ */
-let vRound=null, vPub=null, vRoster=[], vLayout=[], myIx=-1;
+let vRound=null, vPub=null, vRoster=[], vLayout=[], myIx=-1, vTie=1;
 
 function resetVote(){
   $("vin-round").value=""; $("vin-pub-ok").classList.remove("show"); $("vin-pub-err").classList.remove("show");
   $("vin-form").hidden=true; $("chipout").hidden=true; $("vin-chip-err").classList.remove("show");
   $("vin-status").textContent="Waiting for the round code — the group-chat message starting H44S1-";
-  $("vin-code").value=""; vRound=null; vPub=null; vRoster=[]; vLayout=[]; myIx=-1;
+  $("vin-code").value=""; vRound=null; vPub=null; vRoster=[]; vLayout=[]; myIx=-1; vTie=1;
 }
 $("vin-round").addEventListener("input", async ()=>{
   const ok=$("vin-pub-ok"), er=$("vin-pub-err"), st=$("vin-status");
@@ -1058,11 +1184,12 @@ $("vin-round").addEventListener("input", async ()=>{
     if(o.v!==1 || !Array.isArray(o.roster) || !Array.isArray(o.layout) || typeof o.pub!=="string") throw new Error("shape");
     if(o.roster.length<4 || new Set(o.roster.map(x=>x.toLowerCase())).size!==o.roster.length) throw new Error("roster");
     if(o.layout.length<2 || o.layout.some(s=>s<MIN_HOUSE_SIZE) || o.layout.reduce((a,b)=>a+b,0)!==o.roster.length) throw new Error("layout");
+    vTie=(Number.isInteger(o.t) && o.t>=1 && o.t<=o.roster.length-1) ? o.t : 1;
     vPub=await importPub(fromB64u(o.pub));
     vRoster=o.roster;
     vLayout=o.layout;
-    vRound={roster:o.roster, layout:o.layout, pub:o.pub};
-    $("vin-pub-ok").textContent=`Round code opens: ${vRoster.length} people, houses ${fmtLayout(vLayout)}.`;
+    vRound={roster:o.roster, layout:o.layout, t:vTie, pub:o.pub};
+    $("vin-pub-ok").textContent=`Round code opens: ${vRoster.length} people, houses ${fmtLayout(vLayout)}${vTie>1?" · ties up to "+vTie:""}.`;
     ok.classList.add("show");
     st.textContent="";
     const sel=$("vin-name");
@@ -1079,19 +1206,9 @@ $("vin-name").addEventListener("change", ()=>{
   myIx=ix; $("chipout").hidden=true; $("vin-chip-err").classList.remove("show");
   $("vin-rank").hidden=true;               // check in again after switching person
   $("vin-start-err").classList.remove("show");
-  const list=$("ranklist"); list.innerHTML="";
-  if(ix<0){ list.innerHTML=`<div class="emptyrow">Pick your own name above.</div>`; return; }
-  vRoster.forEach((nm,i)=>{
-    if(i===ix) return;
-    const item=document.createElement("div"); item.className="item"; item.draggable=true;
-    item.setAttribute("role","option"); item.dataset.i=i;
-    item.innerHTML=`<span class="ord"></span><span class="swatch" style="background:hsl(${hueOf(nm)} 45% 70%)"></span><span class="nm">${nm}</span>
-      <span class="grip" title="Drag to reorder" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></span>
-      <button type="button" class="mv" data-dir="-1" aria-label="Move ${nm} up"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
-      <button type="button" class="mv" data-dir="1" aria-label="Move ${nm} down"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>`;
-    list.appendChild(item);
-  });
-  wireRank(); paintOrder(); autoCheckin();
+  if(ix<0){ bState=null; return; }
+  buildBoard();
+  autoCheckin();
 });
 $("btn-checkin").onclick=()=>{
   const err=$("vin-start-err"); err.classList.remove("show");
@@ -1110,25 +1227,184 @@ function autoCheckin(){
 $("vin-code").addEventListener("input", autoCheckin);
 $("vin-code").addEventListener("keydown",(e)=>{ if(e.key==="Enter") $("btn-checkin").click(); });
 
-function wireRank(){
-  const list=$("ranklist"); let held=null;
-  list.querySelectorAll(".item").forEach(item=>{
-    item.querySelectorAll(".mv").forEach(b=>{
-      b.onclick=(e)=>{ e.stopPropagation(); moveItem(item,+b.dataset.dir); };
+/* ═════════ ranking board: people are bubbles, each shelf is a preference level.
+   Several bubbles on one shelf = a tie (only when the organiser allows ties). ═══ */
+let bState=null;          // { levels:[[i..]], pool:[i..] }
+const $board=()=>document.getElementById("board");
+
+function buildBoard(){
+  bState={ levels:[], pool:vRoster.map((_,i)=>i).filter(i=>i!==myIx) };
+  $("rankhint").innerHTML = vTie>1
+    ? `Drag everyone into the rows — top row is who you want most. Rows hold up to <b>${vTie} people</b>; same row <b>= a tie</b>. Tied shelves pull a little weaker each, so a big “don't mind” group can't dominate.`
+    : `Drag everyone into the rows — top row is who you want most. Strict order is the anti-gaming rule: one #1, one #2 … one bottom. Boosting someone means dropping someone.`;
+  renderBoard(true);
+}
+function makeBub(i, settled){
+  const nm=vRoster[i];
+  const b=document.createElement("div");
+  b.className="bub"+(settled?" settled":"");
+  b.dataset.i=i; b.dataset.hue=hueOf(nm);
+  b.setAttribute("role","option"); b.setAttribute("aria-label",nm);
+  b.style.setProperty("--h", hueOf(nm));
+  b.title=`${nm} — drag me into a row`;
+  b.innerHTML=`<span class="bw"><span class="nmw">${nm}</span>
+    <span class="mini" aria-hidden="false">
+      <button type="button" class="mv" data-dir="-1" aria-label="Move ${nm} up a row">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button type="button" class="mv" data-dir="1" aria-label="Move ${nm} down a row">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+    </span></span>`;
+  b.querySelectorAll(".mv").forEach(btn=>btn.addEventListener("click",(e)=>{ e.stopPropagation(); nudgeBubble(+b.dataset.i, +btn.dataset.dir); }));
+  return b;
+}
+function renderBoard(first){
+  const prev=captureRects();
+  const shelves=$("shelves"), pool=$("pool");
+  shelves.innerHTML=""; 
+  [...pool.querySelectorAll(".bub")].forEach(b=>b.remove());
+  const cap=Math.min(vTie, vRoster.length-1);
+  bState.levels.forEach(g=>{
+    const sheet=document.createElement("div"); sheet.className="shelf"; sheet.dataset.level="";
+    const lvl=document.createElement("span"); lvl.className="lvl";
+    lvl.textContent=(bState.levels.indexOf(g)+1)+(g.length>1?" ≡":"");
+    lvl.title=g.length>1?vRoster.filter((_,i)=>g.includes(i)).join(" tied with "):"";
+    const slot=document.createElement("div"); slot.className="slot";
+    g.forEach(i=>{
+      const b=makeBub(i,true);
+      if(vTie>1 && g.length>1){ const chip=document.createElement("span"); chip.className="tiechip"; chip.textContent=""+g.length; b.appendChild(chip); }
+      slot.appendChild(b);
     });
-    item.addEventListener("dragstart",(e)=>{ held=item; item.classList.add("held"); e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",""); });
-    item.addEventListener("dragend",()=>{ held=null; item.classList.remove("held"); list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); });
-    item.addEventListener("dragover",(e)=>{ e.preventDefault(); list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); if(item!==held) item.classList.add("over"); });
-    item.addEventListener("dragleave",()=>item.classList.remove("over"));
-    item.addEventListener("drop",(e)=>{ e.preventDefault(); if(held&&held!==item){ item.parentNode.insertBefore(held,item); paintOrder(); } list.querySelectorAll(".item").forEach(i=>i.classList.remove("over")); });
+    sheet.append(lvl,slot);
+    shelves.appendChild(sheet);
+  });
+  bState.pool.forEach(i=>pool.appendChild(makeBub(i,false)));
+  $("poolhint").style.display=bState.pool.length?"":"none";
+  wireDnD(cap);
+  if(!first) playFLIP(prev);
+}
+function captureRects(){
+  const m=new Map();
+  $board().querySelectorAll(".bub").forEach(b=>{
+    const r=b.getBoundingClientRect();
+    if(r.width) m.set(+b.dataset.i,{x:r.left,y:r.top});
+  });
+  return m;
+}
+function playFLIP(prev){
+  $board().querySelectorAll(".bub").forEach(b=>{
+    const p=prev.get(+b.dataset.i); if(!p) return;
+    const r=b.getBoundingClientRect();
+    const dx=p.x-r.left, dy=p.y-r.top; if(!dx&&!dy) return;
+    b.style.transition="none";
+    b.style.transform=`translate(${dx}px,${dy}px)`;
+    requestAnimationFrame(()=>{
+      b.style.transition="transform .28s cubic-bezier(.22,.9,.28,1.05)";
+      b.style.transform="translate(0,0)";
+      setTimeout(()=>{ b.style.transition=""; b.style.transform=""; },300);
+    });
   });
 }
-function moveItem(item,dir){
-  if(dir<0 && item.previousElementSibling) item.parentNode.insertBefore(item,item.previousElementSibling);
-  if(dir>0 && item.nextElementSibling) item.parentNode.insertBefore(item.nextElementSibling,item);
-  paintOrder();
+/* place a person: target shelf index k or "pool"; shelves over cap cascade downwards.
+   The vacated seat stays open while someone slides into it; empty shelves are
+   collapsed afterwards so DOM indices stay in sync with bState. */
+function placeBubble(i, target){
+  const cap=Math.min(vTie, vRoster.length-1);
+  const origin=bState.levels.findIndex(g=>g.includes(i));
+  bState.levels=bState.levels.map(g=>g.filter(x=>x!==i));
+  bState.pool=bState.pool.filter(x=>x!==i);
+  if(target==="pool"){ bState.pool.push(i); }
+  else{
+    while(target>=bState.levels.length) bState.levels.push([]);
+    const g=bState.levels[target];
+    if(origin>=0 && target<origin) g.unshift(i); else g.push(i);
+    let sliding=i, k=target;
+    while(bState.levels[k].length>cap){
+      const cur=bState.levels[k];
+      // a resident (never the bubble that just landed) slides one level down
+      const over = cur[cur.length-1]===sliding && cur.length>1 ? cur[cur.length-2] : cur[cur.length-1];
+      cur.splice(cur.indexOf(over),1);
+      k++;
+      while(k>=bState.levels.length) bState.levels.push([]);
+      bState.levels[k].push(over);
+      sliding=over;
+    }
+  }
+  bState.levels=bState.levels.filter(g=>g.length);
+  renderBoard();
 }
-function paintOrder(){ $("ranklist").querySelectorAll(".item").forEach((it,i)=>{ it.querySelector(".ord").textContent=i+1; }); }
+function nudgeBubble(i,dir){
+  const cap=Math.min(vTie, vRoster.length-1);
+  const k=bState.levels.findIndex(g=>g.includes(i));
+  if(dir<0){
+    if(k===-1){ placeBubble(i,bState.levels.length); return; }   // pool: drop at the bottom first
+    if(k===0) return bump(i);                            // at the top
+    if(bState.levels[k-1].length<cap) placeBubble(i,k-1);
+    else{ const t=bState.levels[k-1]; bState.levels[k-1]=bState.levels[k]; bState.levels[k]=t; renderBoard(); } // full row above → swap rows
+  }else{
+    if(k===-1) return;
+    if(k>=bState.levels.length-1) { placeBubble(i,"pool"); return; } // last shelf → back to the pool
+    if(bState.levels[k+1].length<cap) placeBubble(i,k+1);
+    else{ const t=bState.levels[k+1]; bState.levels[k+1]=bState.levels[k]; bState.levels[k]=t; renderBoard(); }
+  }
+}
+function bump(i){  // shake when you'd go above the top row
+  const b=$board().querySelector(`.bub[data-i="${i}"]`);
+  if(!b) return;
+  b.animate([{transform:"translateX(0)"},{transform:"translateX(-4px)"},{transform:"translateX(4px)"},{transform:"translateX(0)"}],{duration:220});
+}
+/* pointer drag with live drop-zone highlighting */
+function wireDnD(cap){
+  let drag=null;
+  $board().querySelectorAll(".bub").forEach(b=>{
+    b.addEventListener("pointerdown",(e)=>{
+      if(e.target.closest("button")||drag) return;
+      e.preventDefault();
+      const r=b.getBoundingClientRect();
+      drag={ i:+b.dataset.i, el:b, dx:e.clientX-r.left, dy:e.clientY-r.top, w:r.width, from:liveIndex(+b.dataset.i) };
+      b.classList.add("fly");
+      b.style.left=(r.left)+"px"; b.style.top=(r.top)+"px"; b.style.width=r.width+"px";
+      document.body.appendChild(b);
+      b.setPointerCapture?.(e.pointerId);
+      clearMarks();
+    });
+  });
+  const clearMarks=()=>{ $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop")); };
+  window.addEventListener("pointermove",(e)=>{
+    if(!drag) return;
+    drag.el.style.left=(e.clientX-drag.dx)+"px";
+    drag.el.style.top=(e.clientY-drag.dy)+"px";
+    clearMarks();
+    const t=hitTarget(e.clientX,e.clientY,drag.el);
+    if(t) t.el.classList.add("drop");
+  },{passive:true});
+  window.addEventListener("pointerup",(e)=>{
+    if(!drag) return;
+    const d=drag; drag=null;
+    clearMarks();
+    const t=hitTarget(e.clientX,e.clientY,d.el) || {kind:"pool",el:$("pool")};
+    // settle: put the element back into layout flow at the right spot via state
+    d.el.classList.remove("fly");
+    d.el.style.left=d.el.style.top=d.el.style.width="";
+    placeBubble(d.i, t.kind==="pool" ? "pool" : t.k);
+  });
+}
+function hitTarget(x,y,el){
+  let best=null;
+  [...$board().querySelectorAll(".shelf")].forEach((sheet,k)=>{
+    const r=sheet.getBoundingClientRect();
+    if(x>=r.left-6&&x<=r.right+6&&y>=r.top-8&&y<=r.bottom+8) best={kind:"shelf",k,el:sheet};
+  });
+  if(!best){
+    const rp=$("pool").getBoundingClientRect();
+    if(y>=rp.top-8 && x>=rp.left-6 && x<=rp.right+6) best={kind:"pool",el:$("pool")};
+  }
+  return best;
+}
+function liveIndex(i){
+  const k=bState.levels.findIndex(g=>g.includes(i));
+  return k===-1 ? "pool" : k;
+}
+
 
 $("btn-chip").onclick=async ()=>{
   const err=$("vin-chip-err"), fail=(m)=>{ err.textContent=m; err.classList.add("show"); return; };
@@ -1137,13 +1413,16 @@ $("btn-chip").onclick=async ()=>{
   if(!vPub) return fail("Open the round code first.");
   if(myIx<0) return fail("Pick your own name first — the ranking skips you.");
   if(!/^[A-Z0-9]{6}$/.test(code)) return fail("Your invite code is 6 letters/digits, like K4Q7XP.");
-  const items=[...$("ranklist").children];
-  if(items.length!==vRoster.length-1) return fail("Rank the others first.");
-  const order=items.map(it=>+it.dataset.i);
   const b=$("btn-chip"), label=b.querySelector("span");
+  const tied=bState.levels.filter(g=>g.length).map(g=>g.slice());
+  const flat=tied.flat();
+  if(flat.length!==vRoster.length-1 || new Set(flat).size!==flat.length) return fail("Rank the others first — drag the stragglers into the rows.");
+  const cap=Math.min(vTie, vRoster.length-1);
+  if(tied.some(g=>g.length>cap)) return fail(`A shelf is over this round's tie limit (${cap}).`);
+  if(vTie>1 && tied.length<2) return fail("This round asks for at least two shelves — separate one person out.");
   b.disabled=true; const old=label.textContent; label.textContent="Encrypting…";
   try{
-    const payload={v:2, code, me:myIx, order};
+    const payload={v:3, code, me:myIx, ties:tied};
     const data=new TextEncoder().encode(JSON.stringify(payload));
     const ct=await crypto.subtle.encrypt({name:"RSA-OAEP"}, vPub, data);
     const chip=CHIP_PREFIX+toB64u(new Uint8Array(ct));
@@ -1154,7 +1433,7 @@ $("btn-chip").onclick=async ()=>{
   }catch(e){ fail("Encryption failed: "+e.message); }
   finally{ b.disabled=false; label.textContent=old; }
 };
-$("re-rank").onclick=()=>{ $("chipout").hidden=true; $("ranklist").scrollIntoView({behavior:"smooth", block:"center"}); };
+$("re-rank").onclick=()=>{ $("chipout").hidden=true; $board().scrollIntoView({behavior:"smooth", block:"center"}); };
 $("cp-chip").onclick=()=>copyText($("chip-txt").value,"Chip copied — post it in the chat, once");
 
 /* ═════════ reveal screen ═════════ */
@@ -1197,14 +1476,20 @@ $("btn-reveal").onclick=async ()=>{
       try{
         const pt=await crypto.subtle.decrypt({name:"RSA-OAEP"}, privKey, fromB64u(c.slice(CHIP_PREFIX.length)));
         const bl=JSON.parse(new TextDecoder().decode(pt));
-        if(bl.v!==2 || !bl.code || !Number.isInteger(bl.me)) throw new Error("malformed ballot");
+        if(!bl.code || !Number.isInteger(bl.me) || (bl.v!==2 && bl.v!==3)) throw new Error("malformed ballot");
         const home=pack.codes.find(x=>x.c===bl.code);
         if(!home) throw new Error(`unknown invite code ${bl.code}`);
         if(done.has(bl.code)) throw new Error(`chip for code ${bl.code} appears twice`);
         if(home.m!==bl.me) throw new Error(`code ${bl.code} arrived under the wrong name`);
+        const cap=Math.min(pack.t||1, n-1);
+        const gs=ballotLevel(bl);
         const others=new Set(Array.from({length:n},(_,i)=>i).filter(i=>i!==bl.me));
-        if(!Array.isArray(bl.order) || bl.order.length!==n-1 || new Set(bl.order).size!==n-1 || bl.order.some(i=>!others.has(i)))
+        const bad=!Array.isArray(gs) || !gs.length
+          || gs.some(g=>!Array.isArray(g)||!g.length||g.length>cap||g.some(i=>!others.has(i)));
+        if(bad) throw new Error(`malformed ranking for code ${bl.code}`);
+        if(new Set(gs.flat()).size!==gs.flat().length || gs.flat().length!==n-1)
           throw new Error(`malformed ranking for code ${bl.code}`);
+        if(gs.length===1 && cap>1) throw new Error(`a chip cannot tie the whole field (code ${bl.code})`);
         done.add(bl.code); ballots.push(bl);
       }catch(e){ problems.push(e.message); }
     }
@@ -1283,6 +1568,7 @@ function openViewer(code){
   for(let i=0;i<n;i++) for(let j=0;j<n;j++){
     if(i===j){ if(res.w[i][j]!==0) throw new Error("bad matrix"); }
     else if(res.w[i][j]!==res.w[j][i] || res.w[i][j]<0 || res.w[i][j]>n-1) throw new Error("bad matrix");
+    else if(((res.w[i][j]*2)%1)) throw new Error("bad matrix");   // only halves (fractional ties) are legal
   }
   if(res.layout.length<2 || res.layout.reduce((a,b)=>a+b,0)!==n || res.layout.some(s=>s<1)) throw new Error("bad layout");
   viewer.n=n; viewer.roster=res.roster; viewer.w=res.w;

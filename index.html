@@ -212,8 +212,15 @@
   .bub.drag{cursor:grabbing; transition:none; position:fixed; z-index:40; pointer-events:none;
     box-shadow:0 6px 14px rgba(27,28,24,.2), 0 18px 34px -10px hsl(var(--h) 30% 40% / .55)}
   .bub.drag .nmw{animation:none}
-  .bub:hover .nmw{animation:waggle .85s ease-in-out infinite}
-  @keyframes waggle{0%,100%{transform:rotate(-3.2deg)} 30%{transform:rotate(2.7deg)} 60%{transform:rotate(-1.7deg)} 82%{transform:rotate(1.1deg)}}
+  .bub:hover .nmw{animation:none}          /* the pill wobbles, not the letters */
+  .bub:hover:not(.drag), .bub:focus-visible:not(.drag){animation:waggle 1.35s ease-in-out infinite}
+  .bub.landed, .bub.landed:hover{animation:landed .3s var(--ease)}
+  @keyframes waggle{
+    0%,100%{rotate:-1.6deg; translate:0 0; scale:1}
+    18%{rotate:1.5deg; translate:0 -1.2px; scale:1.012}
+    38%{rotate:-1.05deg; translate:0 0; scale:1}
+    58%{rotate:.8deg; translate:0 -1px; scale:1.008}
+    78%{rotate:-.45deg; translate:0 0; scale:1}}
   @keyframes bob{0%,100%{transform:translateY(-1.6px)} 50%{transform:translateY(1.6px)}}
   @keyframes landed{0%{transform:scale(1.07)} 55%{transform:scale(.96,.92)} 100%{transform:none}}
   .bub.landed{animation:landed .3s var(--ease)}
@@ -587,7 +594,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10c</span>
+      <span>House Sort · build 2026-11-10d</span>
     </div>
   </footer>
 </div>
@@ -1465,7 +1472,7 @@ function hitTarget(x,y){
   const sheets=[...$board().querySelectorAll(".shelf")];
   for(let k=0;k<sheets.length;k++){
     const r=sheets[k].getBoundingClientRect();
-    if(x>=r.left-4&&x<=r.right+4&&y>=r.top+3&&y<=r.bottom-3) return {kind:"shelf",k,el:sheets[k]};
+    if(x>=r.left-4&&x<=r.right+4&&y>=r.top+1&&y<=r.bottom-1) return {kind:"shelf",k,el:sheets[k]};
   }
   const gap=gapTarget(x,y,sheets);
   if(gap) return {kind:"gap",k:gap.k,y:gap.y};
@@ -1476,15 +1483,20 @@ function hitTarget(x,y){
 /* the thin spaces between shelves are insertion lanes: dropping there opens a new level */
 function gapTarget(x,y,sheets){
   const sc=$("shelves").getBoundingClientRect();
-  if(!(x>=sc.left-4&&x<=sc.right+4)||y<sc.top-12||y>sc.bottom+12) return null;
+  if(!(x>=sc.left-4&&x<=sc.right+4)) return null;
   if(!sheets.length) return {k:0,y:sc.top};
-  const bounds=[{k:0,y:sheets[0].top-5}];
+  const first=sheets[0].getBoundingClientRect();
+  // dedicated lane above row 1: generous, so moving someone to the top spot is easy
+  if(y>=sc.top-48 && y<first.top) return {k:0,y:first.top-6};
+  if(y<sc.top-12||y>sc.bottom+12) return null;
+  const last=sheets[sheets.length-1].getBoundingClientRect();
+  const bounds=[];
   for(let k=0;k<sheets.length-1;k++)
     bounds.push({k:k+1,y:(sheets[k].getBoundingClientRect().bottom+sheets[k+1].getBoundingClientRect().top)/2});
-  bounds.push({k:sheets.length,y:sheets[sheets.length-1].getBoundingClientRect().bottom+5});
+  bounds.push({k:sheets.length,y:last.bottom+5});
   let best=null,bd=1e9;
   bounds.forEach(b=>{ const d=Math.abs(y-b.y); if(d<bd){bd=d;best=b;} });
-  return bd<=20?best:null;
+  return bd<=24?best:null;
 }
 
 

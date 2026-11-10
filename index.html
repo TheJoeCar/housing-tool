@@ -162,12 +162,12 @@
   /* ── ranking board: shelves + a scattered pool of bubbles ── */
   .board{border:1px solid var(--border); border-radius:var(--radius-sm); background:
       linear-gradient(var(--surface),var(--surface)) padding-box;
-      display:block; overflow:hidden; user-select:none; touch-action:none; position:relative}
+      display:block; overflow:hidden; user-select:none; touch-action:pan-y; position:relative}
   .lanemark{position:absolute; left:12px; right:12px; height:0; border-top:2.5px dashed var(--accent);
     pointer-events:none; z-index:6; filter:drop-shadow(0 2px 6px rgba(91,107,84,.45))}
   .lanemark::before{content:""; position:absolute; left:-7px; top:-6px; width:11px; height:11px;
     border-radius:999px; background:var(--accent); box-shadow:0 0 0 3px rgba(91,107,84,.18)}
-  .shelves{display:flex; flex-direction:column; gap:8px; padding:14px 14px 6px; min-height:56px}
+  .shelves{display:flex; flex-direction:column; gap:8px; padding:14px 14px 6px; min-height:56px; touch-action:pan-y}
   .shelf{
     display:flex; align-items:center; gap:10px; min-height:56px;
     border:1.5px dashed #CCC8B9; border-radius:var(--radius-sm); padding:5px 10px;
@@ -186,7 +186,7 @@
   .pool{
     border-top:1.5px dashed var(--border); padding:16px 12px 20px; display:flex; flex-wrap:wrap; justify-content:center;
     column-gap:11px; row-gap:15px;
-    min-height:88px; background:#F1EEE3; position:relative;
+    min-height:88px; background:#F1EEE3; position:relative; touch-action:pan-y;
     transition:background .18s var(--ease), box-shadow .18s var(--ease)}
   .pool.drop{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent)}
   .pool.is-empty{align-items:center}
@@ -195,6 +195,7 @@
   .bub{
     --h:210; display:inline-flex; align-items:center; gap:7px; cursor:grab; touch-action:none;
     border-radius:999px; padding:8px 13px 8px 9px; position:relative;
+    touch-action:pan-y; -webkit-touch-callout:none;
     background:hsl(var(--h) 42% 88%); border:1px solid hsl(var(--h) 30% 66%);
     box-shadow:0 1.5px 4px rgba(27,28,24,.14), 0 6px 14px -7px hsl(var(--h) 30% 45% / .5);
     font-weight:600; font-size:14.5px; color:hsl(var(--h) 45% 24%);
@@ -303,7 +304,10 @@
     background:linear-gradient(180deg,#FCFBF7,#FFFFFF); flex-wrap:wrap}
   .opt > .head .tag{font-family:var(--font-display); font-weight:700; font-size:17px}
   .opt > .head .fair{margin-left:auto; font-size:13px; color:var(--muted)}
-  .opt .optstreet{padding:6px 18px 2px}
+  .opt .optstreet{padding:18px 18px 16px}
+  .opt .street{justify-content:center; margin-top:0; padding:2px 0 0; gap:24px}
+  .opt .street::after{display:none}          /* no stray ground strip inside result cards */
+  #resview .street::after{display:none}      /* nor under the try-a-split builder */
 
   /* ── toast ──────────────────────────────────────────── */
   #toast{
@@ -594,7 +598,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10d</span>
+      <span>House Sort · build 2026-11-10f</span>
     </div>
   </footer>
 </div>
@@ -1250,9 +1254,12 @@ const $board=()=>document.getElementById("board");
 
 function buildBoard(){
   bState={ levels:[], pool:vRoster.map((_,i)=>i).filter(i=>i!==myIx) };
+  const lead = matchMedia("(pointer:coarse)").matches
+    ? "Press and hold a bubble to lift it into the rows — swipe to scroll."
+    : "Drag everyone into the rows — top row is who you want most.";
   $("rankhint").innerHTML = vTie>1
-    ? `Drag everyone into the rows — top row is who you want most. Rows hold up to <b>${vTie} people</b>; same row <b>= a tie</b>. Tied shelves pull a little weaker each, so a big “don't mind” group can't dominate.`
-    : `Drag everyone into the rows — top row is who you want most. Strict order is the anti-gaming rule: one #1, one #2 … one bottom. Boosting someone means dropping someone.`;
+    ? `${lead} Rows hold up to <b>${vTie} people</b>; same row <b>= a tie</b>. Tied shelves pull a little weaker each, so a big “don't mind” group can't dominate.`
+    : `${lead} Strict order is the anti-gaming rule: one #1, one #2 … one bottom. Boosting someone means dropping someone.`;
   renderBoard(true);
 }
 function makeBub(i, settled){
@@ -1407,32 +1414,50 @@ function bump(i){  // shake when you can't go above the top row
   if(!b) return;
   b.animate([{transform:"translateX(0)"},{transform:"translateX(-4px)"},{transform:"translateX(4px)"},{transform:"translateX(0)"}],{duration:220});
 }
-/* pointer drag: pick up, warp with lagged tilt + squish, drop with a landing bounce */
+/* pointer drag: pick up, warp with lagged tilt + squish, drop with a landing bounce.
+   Mouse/pen lifts immediately. Touch holds for a beat first, so an ordinary swipe
+   still scrolls the page even when it starts on a bubble. */
 function wireDnD(){
-  let drag=null;
+  let drag=null, pending=null;
+  const HOLD=220, SLOP=10;   // touch: hold this long to lift; move this far first and it scrolls
   const lane=$("lanemark");
   const clearMarks=()=>{
     $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop"));
     lane.hidden=true;
   };
+  const cancelPending=()=>{ if(pending){ clearTimeout(pending.timer); pending=null; } };
+  const startDrag=(b,x,y,pid)=>{
+    const r=b.getBoundingClientRect();
+    // drag a floating clone; the real bubble keeps its space so the layout never jumps
+    const ghost=b.cloneNode(true);
+    ghost.classList.add("drag");
+    ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px"; ghost.style.width=r.width+"px";
+    ghost.style.transform="scale(1.09)";
+    document.body.appendChild(ghost);
+    b.style.visibility="hidden";
+    drag={ i:+b.dataset.i, el:ghost, orig:b, dx:x-r.left, dy:y-r.top, lx:x, ly:y, rt:0 };
+    try{ b.setPointerCapture?.(pid); }catch{}
+    clearMarks();
+  };
   $board().querySelectorAll(".bub").forEach(b=>{
+    b.addEventListener("contextmenu",(e)=>e.preventDefault());
     b.addEventListener("pointerdown",(e)=>{
-      if(e.button!==0||drag) return;
-      e.preventDefault();
-      const r=b.getBoundingClientRect();
-      // drag a floating clone; the real bubble keeps its space so the layout never jumps
-      const ghost=b.cloneNode(true);
-      ghost.classList.add("drag");
-      ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px"; ghost.style.width=r.width+"px";
-      ghost.style.transform="scale(1.09)";
-      document.body.appendChild(ghost);
-      b.style.visibility="hidden";
-      drag={ i:+b.dataset.i, el:ghost, orig:b, dx:e.clientX-r.left, dy:e.clientY-r.top, lx:e.clientX, ly:e.clientY, rt:0 };
-      b.setPointerCapture?.(e.pointerId);
-      clearMarks();
+      if(e.button!==0||drag||pending) return;
+      if(e.pointerType==="touch"){
+        // don't preventDefault: a swipe must stay free to scroll
+        pending={ b, x:e.clientX, y:e.clientY, id:e.pointerId,
+          timer:setTimeout(()=>{ const p=pending; if(!p) return; pending=null; startDrag(p.b,p.x,p.y,p.id); }, HOLD) };
+      }else{
+        e.preventDefault();
+        startDrag(b,e.clientX,e.clientY,e.pointerId);
+      }
     });
   });
   window.addEventListener("pointermove",(e)=>{
+    if(pending){
+      if(Math.hypot(e.clientX-pending.x,e.clientY-pending.y)>SLOP) cancelPending();  // that's a scroll, not a drag
+      return;
+    }
     if(!drag) return;
     const vx=e.clientX-drag.lx, vy=e.clientY-drag.ly;
     drag.lx=e.clientX; drag.ly=e.clientY;
@@ -1451,7 +1476,10 @@ function wireDnD(){
       lane.style.top=(t.y-br.top)+"px";
     }else $("pool").classList.add("drop");
   },{passive:true});
+  // once a held bubble is lifted, keep the page still while it moves
+  window.addEventListener("touchmove",(e)=>{ if(drag) e.preventDefault(); },{passive:false});
   const finish=(e)=>{
+    if(pending){ cancelPending(); return; }
     if(!drag) return;
     const d=drag; drag=null;
     clearMarks();
@@ -1465,7 +1493,7 @@ function wireDnD(){
     else placeBubble(d.i, t && t.kind==="shelf" ? t.k : "pool", prev);
   };
   window.addEventListener("pointerup",finish);
-  window.addEventListener("pointercancel",finish);
+  window.addEventListener("pointercancel",(e)=>{ cancelPending(); if(drag) finish(e); });
 }
 /* returns {kind:"shelf"|"gap"|"pool"}; "gap" carries the y of the insertion line */
 function hitTarget(x,y){

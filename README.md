@@ -41,7 +41,9 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
    pulls a little weaker per person, so a large "don't mind" group can't dominate.
    Drop a bubble **in the gap between two rows** (or **above the top row**) to open a new
    row at that exact spot, or **below the last row** to give someone their own new bottom
-   row — that's how you split a tied group apart. (Keyboard-only: focus a bubble and press ↑/↓.)
+   row — that's how you split a tied group apart. On a phone, **press and hold** a bubble
+   to lift it, and swipe normally to scroll the page. (Keyboard-only: focus a bubble and
+   press ↑/↓.)
 4. **Create my chip** → copy the encrypted gibberish → post it in the chat. Done.
 
 **Anyone:**

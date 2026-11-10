@@ -159,7 +159,7 @@
   .tieseg .segb.on{background:var(--accent); border-color:var(--accent); color:#F4F2EA; box-shadow:var(--shadow-lift)}
   .tieseg .segb.on .segsym{color:rgba(244,242,234,.75)}
 
-  /* ── ranking board: shelves + floating bubbles ───────── */
+  /* ── ranking board: shelves + a scattered pool of bubbles ── */
   .board{border:1px solid var(--border); border-radius:var(--radius-sm); background:
       linear-gradient(var(--surface),var(--surface)) padding-box;
       display:block; overflow:hidden; user-select:none; touch-action:none}
@@ -168,58 +168,49 @@
     display:flex; align-items:center; gap:10px; min-height:56px;
     border:1.5px dashed #CCC8B9; border-radius:var(--radius-sm); padding:5px 10px;
     background:rgba(255,255,255,.45);
-    transition:border-color .15s var(--ease), background .15s var(--ease), box-shadow .15s var(--ease);
+    transition:border-color .18s var(--ease), background .18s var(--ease), box-shadow .18s var(--ease);
   }
   .shelf:hover{border-color:#B7B2A0}
   .shelf.drop{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px rgba(91,107,84,.14)}
+  .shelf.empty{border-color:#DDD9CA; background:transparent}
   .shelf .lvl{
     font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--muted);
     width:30px; flex:none; text-align:center; border-right:1px solid var(--border); padding:4px 8px 4px 0}
+  .shelf.empty .lvl{color:#C4C0B2}
   .shelf .slot{flex:1; display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:46px}
-  .shelf .slot:empty::before{content:"…"; color:#C4C0B2; font-size:13px; padding-left:4px}
+  .shelf.empty .slot::before{content:"drop here"; color:#C4C0B2; font-size:12.5px; font-weight:600; letter-spacing:.05em; padding-left:6px}
   .pool{
-    border-top:1.5px dashed var(--border); padding:12px 14px 14px; display:flex; flex-wrap:wrap; gap:9px;
-    align-items:center; min-height:66px; background:#F4F2EA; position:relative;
-    transition:background .15s var(--ease), box-shadow .15s var(--ease)}
+    border-top:1.5px dashed var(--border); padding:16px 12px 20px; display:flex; flex-wrap:wrap; justify-content:center;
+    column-gap:11px; row-gap:15px;
+    min-height:88px; background:#F1EEE3; position:relative;
+    transition:background .18s var(--ease), box-shadow .18s var(--ease)}
   .pool.drop{background:var(--accent-soft); box-shadow:inset 0 0 0 2px var(--accent)}
-  .poolhint{width:100%; color:var(--muted); font-size:13px; margin-bottom:-2px}
+  .poolhint{width:100%; text-align:center; color:var(--muted); font-size:12.5px; margin-bottom:-1px}
   .bub{
     --h:210; display:inline-flex; align-items:center; gap:7px; cursor:grab; touch-action:none;
     border-radius:999px; padding:8px 13px 8px 9px; position:relative;
     background:hsl(var(--h) 42% 88%); border:1px solid hsl(var(--h) 30% 66%);
     box-shadow:0 1.5px 4px rgba(27,28,24,.14), 0 6px 14px -7px hsl(var(--h) 30% 45% / .5);
     font-weight:600; font-size:14.5px; color:hsl(var(--h) 45% 24%);
-    transition:transform .16s var(--ease), box-shadow .16s var(--ease), background .15s var(--ease);
+    transition:box-shadow .16s var(--ease), background .15s var(--ease);
   }
-  .bub .bw{display:inline-flex; align-items:center; gap:7px}
-  .bub .nmw{display:inline-block; animation:bob 3.4s ease-in-out infinite}
+  .bub .nmw{display:inline-block}
+  .bub .nmw.dance{animation:bob 3.4s ease-in-out infinite}
   .bub:nth-child(2) .nmw{animation-delay:-.9s}
   .bub:nth-child(3) .nmw{animation-delay:-2.1s}
   .bub.settled .nmw{animation:none}
-  .bub::before{content:""; width:17px; height:17px; border-radius:999px; flex:none;
+  .bub .dot{width:17px; height:17px; border-radius:999px; flex:none;
     background:hsl(var(--h) 45% 62%); box-shadow:inset 0 -3px 5px hsl(var(--h) 45% 40% / .5)}
-  .bub:hover{transform:translateY(-1.5px) scale(1.03); box-shadow:0 3px 7px rgba(27,28,24,.16), 0 10px 20px -8px hsl(var(--h) 30% 45% / .55)}
-  .bub:active{cursor:grabbing}
-  .bub.fly{animation:none; transition:none; position:fixed; z-index:30; pointer-events:none;
-    transform:scale(1.09); box-shadow:0 5px 12px rgba(27,28,24,.22), 0 16px 30px -10px hsl(var(--h) 30% 40% / .6);
-    cursor:grabbing}
-  .bub.fly .nmw{animation:none}
+  .bub:hover{box-shadow:0 3px 7px rgba(27,28,24,.18), 0 10px 20px -8px hsl(var(--h) 30% 45% / .6)}
+  .bub:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .bub.drag{cursor:grabbing; transition:none; position:fixed; z-index:40; pointer-events:none;
+    box-shadow:0 6px 14px rgba(27,28,24,.2), 0 18px 34px -10px hsl(var(--h) 30% 40% / .55)}
+  .bub.drag .nmw{animation:none}
   .bub .tiechip{position:absolute; top:-8px; right:-7px; background:var(--accent); color:#F4F2EA;
     border-radius:999px; font-size:9.5px; font-weight:700; padding:2px 6px; letter-spacing:.03em; box-shadow:0 1px 3px rgba(27,28,24,.3)}
   @keyframes bob{0%,100%{transform:translateY(-1.6px)} 50%{transform:translateY(1.6px)}}
-  @keyframes pop{0%{transform:scale(1.14)} 60%{transform:scale(.965)} 100%{transform:scale(1)}}
-  .bub .mini{display:flex; gap:3px; margin-left:2px}
-  .bub .mini button{
-    width:26px; height:26px; border-radius:8px; cursor:pointer; display:grid; place-items:center;
-    color:hsl(var(--h) 40% 30%); background:rgba(255,255,255,.72); border:1px solid hsl(var(--h) 28% 72%);
-    transition:background .15s var(--ease), transform .1s var(--ease)}
-  .bub .mini button:hover{background:#fff; transform:scale(1.08)}
-  .bub .mini button:active{transform:scale(.9)}
-  .bub .mini button.tie{font-weight:700; font-size:12.5px}
-  .shelf.drop .bub .mini{visibility:hidden}
-  .pool .bub .mini{opacity:.55}   /* pool arrows subdued until hover, still clickable */
-  .pool .bub:hover .mini, .pool .bub:focus-within .mini{opacity:1}
-  @media (hover:none){ .bub .mini{display:flex} .pool .bub .mini{opacity:.55} }
+  @keyframes landed{0%{transform:scale(1.07)} 55%{transform:scale(.96,.92)} 100%{transform:none}}
+  .bub.landed{animation:landed .3s var(--ease)}
 
   .mv{
     width:40px; height:40px; border-radius:var(--radius-sm); cursor:pointer; flex:none;
@@ -504,7 +495,7 @@ Paulo</textarea>
             <div class="board" id="board" role="listbox" aria-labelledby="ranklabel">
               <div class="shelves" id="shelves"></div>
               <div class="pool" id="pool" aria-label="Not yet ranked">
-                <div class="poolhint" id="poolhint">Drag everyone up into the rows above — highest row wins</div>
+                <div class="poolhint" id="poolhint">Still waiting — grab one and drag it up into the rows</div>
               </div>
             </div>
             <p class="hint" id="rankhint"></p>
@@ -589,7 +580,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10</span>
+      <span>House Sort · build 2026-11-10b</span>
     </div>
   </footer>
 </div>
@@ -1246,27 +1237,30 @@ function makeBub(i, settled){
   b.dataset.i=i; b.dataset.hue=hueOf(nm);
   b.setAttribute("role","option"); b.setAttribute("aria-label",nm);
   b.style.setProperty("--h", hueOf(nm));
-  b.title=`${nm} — drag me into a row`;
-  b.innerHTML=`<span class="bw"><span class="nmw">${nm}</span>
-    <span class="mini" aria-hidden="false">
-      <button type="button" class="mv" data-dir="-1" aria-label="Move ${nm} up a row">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
-      <button type="button" class="mv" data-dir="1" aria-label="Move ${nm} down a row">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
-    </span></span>`;
-  b.querySelectorAll(".mv").forEach(btn=>btn.addEventListener("click",(e)=>{ e.stopPropagation(); nudgeBubble(+b.dataset.i, +btn.dataset.dir); }));
+  b.tabIndex=0;
+  b.title=`${nm} — grab and drag me into a row (arrow keys work too)`;
+  b.innerHTML=`<span class="dot" aria-hidden="true"></span><span class="nmw${settled?"":" dance"}">${nm}</span>`;
+  b.addEventListener("keydown",(e)=>{
+    if(e.key==="ArrowUp"){ e.preventDefault(); nudgeBubble(+b.dataset.i,-1); }
+    else if(e.key==="ArrowDown"){ e.preventDefault(); nudgeBubble(+b.dataset.i,1); }
+  });
+  if(!settled){
+    // scattered pool: every bubble keeps its own personal tilt & offset
+    const s=[...nm].reduce((a,c)=>(a*33+c.charCodeAt(0))>>>0,7);
+    b.style.transform=`rotate(${(s%11)-5}deg) translateY(${((s>>4)%9)-4}px)`;
+  }
   return b;
 }
-function renderBoard(first){
-  const prev=captureRects();
+function renderBoard(prev){
+  document.body.querySelectorAll(":scope > .bub").forEach(el=>el.remove());   // no ghost drops, ever
   const shelves=$("shelves"), pool=$("pool");
-  shelves.innerHTML=""; 
+  shelves.innerHTML="";
   [...pool.querySelectorAll(".bub")].forEach(b=>b.remove());
   const cap=Math.min(vTie, vRoster.length-1);
   bState.levels.forEach(g=>{
-    const sheet=document.createElement("div"); sheet.className="shelf"; sheet.dataset.level="";
+    const sheet=document.createElement("div"); sheet.className="shelf";
     const lvl=document.createElement("span"); lvl.className="lvl";
-    lvl.textContent=(bState.levels.indexOf(g)+1)+(g.length>1?" ≡":"");
+    lvl.textContent=(shelves.children.length+1)+(g.length>1?" ≡":"");
     lvl.title=g.length>1?vRoster.filter((_,i)=>g.includes(i)).join(" tied with "):"";
     const slot=document.createElement("div"); slot.className="slot";
     g.forEach(i=>{
@@ -1277,10 +1271,19 @@ function renderBoard(first){
     sheet.append(lvl,slot);
     shelves.appendChild(sheet);
   });
-  bState.pool.forEach(i=>pool.appendChild(makeBub(i,false)));
+  if(bState.pool.length){
+    // one open invitation shelf below the stack — the drop zone is always visible
+    const sheet=document.createElement("div"); sheet.className="shelf empty";
+    const lvl=document.createElement("span"); lvl.className="lvl";
+    lvl.textContent=""+(shelves.children.length+1);
+    const slot=document.createElement("div"); slot.className="slot";
+    sheet.append(lvl,slot);
+    shelves.appendChild(sheet);
+    bState.pool.forEach(i=>pool.appendChild(makeBub(i,false)));
+  }
   $("poolhint").style.display=bState.pool.length?"":"none";
   wireDnD(cap);
-  if(!first) playFLIP(prev);
+  if(prev instanceof Map) playFLIP(prev);
 }
 function captureRects(){
   const m=new Map();
@@ -1298,16 +1301,20 @@ function playFLIP(prev){
     b.style.transition="none";
     b.style.transform=`translate(${dx}px,${dy}px)`;
     requestAnimationFrame(()=>{
-      b.style.transition="transform .28s cubic-bezier(.22,.9,.28,1.05)";
+      b.style.transition="transform .3s cubic-bezier(.22,.9,.28,1.06)";
       b.style.transform="translate(0,0)";
-      setTimeout(()=>{ b.style.transition=""; b.style.transform=""; },300);
+      setTimeout(()=>{
+        b.style.transition=""; b.style.transform="";
+        b.classList.add("landed");        // squash-bounce on arrival
+        setTimeout(()=>b.classList.remove("landed"),320);
+      },310);
     });
   });
 }
 /* place a person: target shelf index k or "pool"; shelves over cap cascade downwards.
    The vacated seat stays open while someone slides into it; empty shelves are
    collapsed afterwards so DOM indices stay in sync with bState. */
-function placeBubble(i, target){
+function placeBubble(i, target, prev){
   const cap=Math.min(vTie, vRoster.length-1);
   const origin=bState.levels.findIndex(g=>g.includes(i));
   bState.levels=bState.levels.map(g=>g.filter(x=>x!==i));
@@ -1330,63 +1337,74 @@ function placeBubble(i, target){
     }
   }
   bState.levels=bState.levels.filter(g=>g.length);
-  renderBoard();
+  renderBoard(prev);
 }
 function nudgeBubble(i,dir){
   const cap=Math.min(vTie, vRoster.length-1);
   const k=bState.levels.findIndex(g=>g.includes(i));
+  const prev=captureRects();
   if(dir<0){
-    if(k===-1){ placeBubble(i,bState.levels.length); return; }   // pool: drop at the bottom first
-    if(k===0) return bump(i);                            // at the top
-    if(bState.levels[k-1].length<cap) placeBubble(i,k-1);
-    else{ const t=bState.levels[k-1]; bState.levels[k-1]=bState.levels[k]; bState.levels[k]=t; renderBoard(); } // full row above → swap rows
+    if(k===-1){ placeBubble(i,bState.levels.length,prev); return; }   // keyboard: pool rises at the bottom first
+    if(k===0){ bump(i); return; }                            // at the top
+    if(bState.levels[k-1].length<cap) placeBubble(i,k-1,prev);
+    else{ const t=bState.levels[k-1]; bState.levels[k-1]=bState.levels[k]; bState.levels[k]=t; renderBoard(prev); } // full row above → swap rows
   }else{
     if(k===-1) return;
-    if(k>=bState.levels.length-1) { placeBubble(i,"pool"); return; } // last shelf → back to the pool
-    if(bState.levels[k+1].length<cap) placeBubble(i,k+1);
-    else{ const t=bState.levels[k+1]; bState.levels[k+1]=bState.levels[k]; bState.levels[k]=t; renderBoard(); }
+    if(k>=bState.levels.length-1){ placeBubble(i,"pool",prev); return; } // last shelf → back to the pool
+    if(bState.levels[k+1].length<cap) placeBubble(i,k+1,prev);
+    else{ const t=bState.levels[k+1]; bState.levels[k+1]=bState.levels[k]; bState.levels[k]=t; renderBoard(prev); }
   }
 }
-function bump(i){  // shake when you'd go above the top row
+function bump(i){  // shake when you can't go above the top row
   const b=$board().querySelector(`.bub[data-i="${i}"]`);
   if(!b) return;
   b.animate([{transform:"translateX(0)"},{transform:"translateX(-4px)"},{transform:"translateX(4px)"},{transform:"translateX(0)"}],{duration:220});
 }
-/* pointer drag with live drop-zone highlighting */
+/* pointer drag: pick up, warp with lagged tilt + squish, drop with a landing bounce */
 function wireDnD(cap){
   let drag=null;
+  const clearMarks=()=>{ $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop")); };
   $board().querySelectorAll(".bub").forEach(b=>{
     b.addEventListener("pointerdown",(e)=>{
-      if(e.target.closest("button")||drag) return;
+      if(e.button!==0||drag) return;
       e.preventDefault();
       const r=b.getBoundingClientRect();
-      drag={ i:+b.dataset.i, el:b, dx:e.clientX-r.left, dy:e.clientY-r.top, w:r.width, from:liveIndex(+b.dataset.i) };
-      b.classList.add("fly");
-      b.style.left=(r.left)+"px"; b.style.top=(r.top)+"px"; b.style.width=r.width+"px";
+      drag={ i:+b.dataset.i, el:b, dx:e.clientX-r.left, dy:e.clientY-r.top, lx:e.clientX, ly:e.clientY, rt:0 };
+      b.classList.add("drag");
+      b.style.left=r.left+"px"; b.style.top=r.top+"px"; b.style.width=r.width+"px";
       document.body.appendChild(b);
+      b.style.transform="scale(1.09)";         // quick lift off the scatter
       b.setPointerCapture?.(e.pointerId);
       clearMarks();
     });
   });
-  const clearMarks=()=>{ $board().querySelectorAll(".shelf,.pool").forEach(x=>x.classList.remove("drop")); };
   window.addEventListener("pointermove",(e)=>{
     if(!drag) return;
+    const vx=e.clientX-drag.lx, vy=e.clientY-drag.ly;
+    drag.lx=e.clientX; drag.ly=e.clientY;
+    const spd=Math.min(Math.abs(vx)+Math.abs(vy),30);
+    // lagged jelly feel: tilt follows velocity, scale squashes with speed
+    drag.rt += ((Math.max(-16,Math.min(16, vx*.8))) - drag.rt)*0.35;
     drag.el.style.left=(e.clientX-drag.dx)+"px";
     drag.el.style.top=(e.clientY-drag.dy)+"px";
+    drag.el.style.transform=`rotate(${drag.rt.toFixed(2)}deg) scale(${(1+spd/240).toFixed(3)}, ${(1-spd/340).toFixed(3)})`;
     clearMarks();
     const t=hitTarget(e.clientX,e.clientY,drag.el);
-    if(t) t.el.classList.add("drop");
+    (t && t.el || $("pool")).classList.add("drop");
   },{passive:true});
-  window.addEventListener("pointerup",(e)=>{
+  const finish=(e)=>{
     if(!drag) return;
     const d=drag; drag=null;
     clearMarks();
-    const t=hitTarget(e.clientX,e.clientY,d.el) || {kind:"pool",el:$("pool")};
-    // settle: put the element back into layout flow at the right spot via state
-    d.el.classList.remove("fly");
-    d.el.style.left=d.el.style.top=d.el.style.width="";
-    placeBubble(d.i, t.kind==="pool" ? "pool" : t.k);
-  });
+    const prev=captureRects();
+    const r=d.el.getBoundingClientRect();
+    prev.set(d.i,{x:r.left,y:r.top});          // FLIP from wherever the bubble was released
+    d.el.remove();                             // the ghost is gone before re-render
+    const t=hitTarget(e.clientX,e.clientY);
+    placeBubble(d.i, t && t.kind==="shelf" ? t.k : "pool", prev);
+  };
+  window.addEventListener("pointerup",finish);
+  window.addEventListener("pointercancel",finish);
 }
 function hitTarget(x,y,el){
   let best=null;

@@ -35,10 +35,11 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 1. Open the tool → *I'm voting* → paste the round code from the chat.
 2. Pick your own name (it never enters the chip), paste your invite code → **Check in & start
    ranking**.
-3. Drag the bubbles into the rows — the top row is who you want most. Rows can hold more than
-   one person only when the organiser allows ties; people sharing a row count as tied, and a
-   bigger row pulls a little weaker per person, so a large "don't mind" group can't dominate.
-   Arrows on each bubble move people row by row if you'd rather not drag.
+3. Drag the bubbles into the rows — the top row is who you want most. Empty "drop here"
+   rows show where the next slot lands, and you can stack several people on one row only
+   when the organiser allows ties; people sharing a row count as tied, and a bigger row
+   pulls a little weaker per person, so a large "don't mind" group can't dominate.
+   (Keyboard-only: focus a bubble and press ↑/↓.)
 4. **Create my chip** → copy the encrypted gibberish → post it in the chat. Done.
 
 **Anyone:**

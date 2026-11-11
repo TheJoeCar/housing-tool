@@ -521,7 +521,7 @@
         </button>
         <button id="go-results" type="button" class="hero" data-enter>
           <span class="who"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>See the splits</span>
-          <p>Got a results code? Try any house layout live — no revote needed.</p>
+          <p>Got a results code? See the best splits for the group — no key needed.</p>
           <span class="go">Open the results</span>
         </button>
         <button id="go-setup" type="button" class="orgrow" data-enter>
@@ -999,7 +999,7 @@ $("roster-ta").addEventListener("input", ()=>{
   assignHues(names);
   layout=normaliseLayout(names.length, presetsFor(names.length)[0] || [names.length-2,2]);
   if(!layout) layout=[names.length>=6?names.length-2:names.length/2, names.length>=6?2:names.length/2];
-  renderPresets("setup"); setupStreet(false);
+  renderPresets(); setupStreet(false);
   $("panel-layout").hidden=false;
   $("panel-key").hidden=false;   // roster + layout are set, so key generation is reachable
 });
@@ -1310,21 +1310,15 @@ const GHOST_HOUSE = `<svg width="46" height="44" viewBox="0 0 60 50" aria-hidden
 </svg>`;
 
 /* ═════════ setup: layout builder ═════════ */
-function renderPresets(mode){
-  const n = mode==="setup" ? roster.length : viewer.n;
-  const box = mode==="setup" ? $("presets") : $("vp-presets");
-  box.innerHTML="";
-  presetsFor(n).forEach(p=>{
-    const cur=mode==="setup"?layout:viewer.layout;
+function renderPresets(){
+  $("presets").innerHTML="";
+  presetsFor(roster.length).forEach(p=>{
     const b=document.createElement("button");
-    b.type="button"; b.className="preset"+(p.every((s,i)=>s===cur[i])?" on":"");
+    b.type="button"; b.className="preset"+(p.every((s,i)=>s===layout[i])?" on":"");
     b.innerHTML=`<svg width="13" height="9" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 7 L6 1 L11 7 Z" fill="currentColor" opacity=".85"/></svg><span>${p.join(" + ")}</span>`;
     b.setAttribute("aria-label", b.textContent.replaceAll(" + "," plus ")+" houses");
-    b.onclick=()=>{
-      if(mode==="setup"){ layout=p.slice(); renderPresets("setup"); setupStreet(true); renderLayoutSum(); }
-      else { viewer.setLayout(p.slice()); }
-    };
-    box.appendChild(b);
+    b.onclick=()=>{ layout=p.slice(); renderPresets(); setupStreet(true); renderLayoutSum(); };
+    $("presets").appendChild(b);
   });
 }
 function addHouseFeasible(l){ return l.length<MAX_HOUSES && Math.max(...l) >= MIN_HOUSE_SIZE*2; }
@@ -1400,7 +1394,7 @@ function setupStreet(animate){
   adder.onclick=()=>{ const l=layout.slice(); const hi=l.indexOf(Math.max(...l)); l[hi]-=MIN_HOUSE_SIZE; layout=[...l, MIN_HOUSE_SIZE]; syncSetupLayout(); };
   box.appendChild(adder);
   renderLayoutSum();
-  renderPresets("setup");
+  renderPresets();
 }
 function syncSetupLayout(){
   roster=parseRoster()||roster;
@@ -2029,8 +2023,7 @@ function renderTopCards(append, res, top, labelFn){
 }
 
 /* ═════════ results viewer ═════════ */
-const viewer={ n:0, roster:[], w:null, layout:[], options:[], alts:[],
-  setLayout(l){ viewer.layout=l; viewerRender(false); } };
+const viewer={ n:0, roster:[], layout:[], options:[], alts:[] };
 
 function resetViewer(){ $("rcin").value=""; $("res-err").classList.remove("show"); $("resview").hidden=true; }
 
@@ -2045,9 +2038,10 @@ $("rcin").addEventListener("input", ()=>{
   el.textContent="Results codes start H44R1- — paste the line the organiser posted."; el.className="livehint";
 });
 $("btn-open-results").onclick=()=>{
-  const err=$("res-err"); err.classList.remove("show");
+  const err=$("res-err"); err.classList.remove("show"); err.textContent="";
   const m=($("rcin").value.match(RESULTS_RE)||[])[0];
   if(!m){ err.textContent="Paste the results code — it starts H44R1- (the organiser posted it in the chat)."; err.classList.add("show"); return; }
+  $("resview").hidden=true;
   try{ openViewer(m); }
   catch(e){ err.textContent="That results code didn't open: "+e.message; err.classList.add("show"); }
 };
@@ -2055,26 +2049,8 @@ function openViewer(code){
   let res;
   try{ res=unpackJSON(code, RESULTS_PREFIX); }
   catch{ throw new Error("damaged — copy the whole code again from the chat"); }
-  if(res.v===2) return openViewerScores(res);
-  /* legacy v1 codes carry the pairwise matrix — only they offer the live playground */
-  if(res.v!==1 || !Array.isArray(res.roster) || !Array.isArray(res.layout) || !Array.isArray(res.w))
-    throw new Error("unexpected shape");
-  const n=res.roster.length;
-  assignHues(res.roster);
-  if(!Array.isArray(res.w) || res.w.length!==n || res.w.some(row=>!Array.isArray(row)||row.length!==n)) throw new Error("bad matrix");
-  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
-    if(i===j){ if(res.w[i][j]!==0) throw new Error("bad matrix"); }
-    else if(res.w[i][j]!==res.w[j][i] || res.w[i][j]<0 || res.w[i][j]>n-1) throw new Error("bad matrix");
-    else if(((res.w[i][j]*2)%1)) throw new Error("bad matrix");   // only halves (fractional ties) are legal
-  }
-  if(res.layout.length<2 || res.layout.reduce((a,b)=>a+b,0)!==n || res.layout.some(s=>s<1)) throw new Error("bad layout");
-  viewer.n=n; viewer.roster=res.roster; viewer.w=res.w;
-  viewer.layout=normaliseLayout(n,res.layout) || res.layout;
-  viewer.baseLayout=res.layout.slice();
-  $("res-err").classList.remove("show");
-  viewerRender(true);
-  $("resview").hidden=false;
-  $("resview").scrollIntoView({behavior:"smooth", block:"start"});
+  if(res.v!==2) throw new Error("from an older version of House Sort — ask the organiser to reveal again");
+  return openViewerScores(res);
 }
 /* v2 results codes carry only published split scores — display them read-only */
 function openViewerScores(res){
@@ -2096,11 +2072,11 @@ function openViewerScores(res){
        || !validOpt(a.best) || !fullCover(a.best)) throw new Error("bad alternative");
   }
   assignHues(res.roster);
-  viewer.n=n; viewer.roster=res.roster.slice(); viewer.w=null;
+  viewer.n=n; viewer.roster=res.roster.slice();
   viewer.layout=res.layout.slice();
   viewer.options=res.options; viewer.alts=res.alts;
   $("res-err").classList.remove("show");
-  viewerRender(true);
+  viewerRenderScores();
   $("resview").hidden=false;
   $("resview").scrollIntoView({behavior:"smooth", block:"start"});
 }
@@ -2149,82 +2125,6 @@ function viewerRenderScores(){
   acts.appendChild(cb); wrap.appendChild(acts);
   copyRow.appendChild(wrap);
 
-  setTimeout(()=>document.querySelectorAll("#resview .bar i").forEach(i=>{ i.style.width=i.style.getPropertyValue("--w"); }),80);
-}
-function viewerRender(animate){
-  if(viewer.w==null) return viewerRenderScores();
-  const box=$("resview");
-  if(box.dataset.ready!=="1"){
-    box.innerHTML=`
-      <div id="vp-cards"></div>
-      <h3 style="margin-top:26px">Try a different split</h3>
-      <p class="sub">Move beds between houses — the best groupings recompute instantly, from the pulls between pairs alone. No revote needed.</p>
-      <div class="presets" id="vp-presets" role="group" aria-label="Layout presets"></div>
-      <div class="street ground full" id="vp-builder" aria-live="polite"></div>
-      <p class="lsum" id="vp-sum"></p>`;
-    box.dataset.ready="1";
-  }
-  const parts = enumeratePartitions(viewer.n, viewer.layout) ?? samplePartitions(viewer.n, viewer.layout);
-  const top = bestOf(parts, viewer.w, viewer.n, 3);
-
-  const cards=box.querySelector("#vp-cards");
-  const head=document.createElement("div");
-  head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
-    <p class="sub">Ranked by the unhappiest household member first.</p>`;
-  cards.innerHTML=""; cards.appendChild(head);
-  cards.appendChild(scoreLegend());
-  renderTopCards(c=>cards.appendChild(c), viewer, top);
-
-  // playground: option 1 as the standing arrangement
-  const vb=$("vp-builder");
-  const before=captureDots(vb);
-  renderStreet(vb, viewer.roster, top[0].houses.map((m,i)=>({members:m, pct:top[0].hpc[i]})), {mode:"dots", meters:true, pctHue:true});
-  vb.querySelectorAll(".bld").forEach((bld,hi)=>{
-    const st=document.createElement("div"); st.className="stepper";
-    const minus=document.createElement("button"); minus.type="button"; minus.className="mv"; minus.textContent="−";
-    minus.setAttribute("aria-label",`Move a bed out of house ${hi+1}`);
-    const l=viewer.layout.slice();
-    minus.disabled=!shrinkHouse(l,hi);
-    minus.onclick=()=>{ const nl=viewer.layout.slice(); if(shrinkHouse(nl,hi)) viewer.setLayout(nl); };
-    const sz=document.createElement("span"); sz.className="sz"; sz.textContent=viewer.layout[hi];
-    const plus=document.createElement("button"); plus.type="button"; plus.className="mv"; plus.textContent="+";
-    plus.setAttribute("aria-label",`Move a bed into house ${hi+1}`);
-    const l2=viewer.layout.slice();
-    plus.disabled=!growHouse(l2,hi,viewer.n);
-    plus.onclick=()=>{ const nl=viewer.layout.slice(); if(growHouse(nl,hi,viewer.n)) viewer.setLayout(nl); };
-    const x=document.createElement("button"); x.type="button"; x.className="mv"; x.textContent="🗑"; x.style.fontSize="14px";
-    x.setAttribute("aria-label",`Remove house ${hi+1} — its people spread into the others`);
-    x.disabled=viewer.layout.length<=2 || !removeHouse(viewer.layout.slice(),hi);
-    x.onclick=()=>{ const r=removeHouse(viewer.layout.slice(),hi); if(r) viewer.setLayout(r.rest); };
-    st.append(minus,sz,plus,x);
-    bld.appendChild(st);
-  });
-  const adder=document.createElement("button"); adder.type="button"; adder.className="adder";
-  adder.setAttribute("aria-label","Add a house");
-  adder.innerHTML=GHOST_HOUSE;
-  adder.disabled=!addHouseFeasible(viewer.layout);
-  adder.onclick=()=>{ const l=viewer.layout.slice(); const hi=l.indexOf(Math.max(...l)); l[hi]-=MIN_HOUSE_SIZE; viewer.setLayout([...l,MIN_HOUSE_SIZE]); };
-  vb.appendChild(adder);
-
-  const sum=$("vp-sum");
-  const s=viewer.layout.reduce((a,b)=>a+b,0);
-  sum.className="lsum good";
-  sum.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg> ${viewer.n} people across ${viewer.layout.length} houses — ${fmtLayout(viewer.layout)}`;
-
-  // extra groupings text under the cards
-  const extra=box.querySelector("#vp-copyrow");
-  if(extra) extra.remove();
-  const best=top[0];
-  const text=`House Sort — best split for ${fmtLayout(viewer.layout)}\n` + best.houses.map((m,i)=>`House ${i+1}: ${m.map(ix=>viewer.roster[ix]).join(", ")}`).join("\n");
-  const wrap=document.createElement("div"); wrap.className="field"; wrap.id="vp-copyrow";
-  wrap.innerHTML=`<label for="vpcopy">Groupings for the chat</label>
-    <textarea id="vpcopy" rows="4" readonly spellcheck="false">${text}</textarea>`;
-  const acts=document.createElement("div"); acts.className="actions";
-  const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy groupings";
-  cb.onclick=()=>copyText(text,"Copied — paste the groupings in the chat");
-  acts.appendChild(cb); wrap.appendChild(acts);
-  box.appendChild(wrap);
-  renderPresets("viewer");
   setTimeout(()=>document.querySelectorAll("#resview .bar i").forEach(i=>{ i.style.width=i.style.getPropertyValue("--w"); }),80);
 }
 </script>

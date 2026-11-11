@@ -380,12 +380,17 @@
   .eq{margin:16px auto 6px; text-align:center}
   .eq .eqline{display:block; font-family:Georgia,'Times New Roman',serif; font-style:italic;
     font-size:18.5px; color:var(--ink)}
-  .eq .eqnote{display:block; margin-top:8px; font-size:12.5px; color:var(--muted)}
+  .eq .eqsmall{display:block; margin-top:12px; font-size:15.5px}
+  .eq .eqnote{display:block; margin-top:10px; font-size:12.5px; color:var(--muted)}
   .eq sub{font-size:.62em}
+  .frac{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle;
+    margin:0 5px; line-height:1.15}
+  .frac>span{padding:0 7px}
+  .frac>span:first-child{border-bottom:1.5px solid currentColor}
 
   /* ── back button: floats beside the panel on desktop, sits in the header on phones ── */
   #backbtn{
-    display:none; position:absolute; right:0; top:2px; width:42px; height:42px;
+    display:none; position:absolute; right:0; top:32px; width:42px; height:42px;
     place-items:center; border-radius:999px; border:1px solid var(--border);
     background:var(--surface); color:var(--ink); cursor:pointer; box-shadow:var(--shadow);
     transition:transform .15s var(--ease), box-shadow .15s var(--ease), border-color .15s var(--ease);
@@ -747,8 +752,9 @@ Paulo</textarea>
         <p>With eight people, a pull runs from 1 (one of you put the other last) up to 7 (you each put the other first).</p>
         <div class="eq">
           <span class="eqline">pull(A, B) &nbsp;=&nbsp; n &minus; max( m<sub>A</sub>(B),&nbsp; m<sub>B</sub>(A) )</span>
-          <span class="eqnote">m<sub>X</sub>(Y) is the middle place of the shelf where X put Y — the top shelf counts as place 1, and ties land on halves (a shelf covering places 2 and 3 counts as 2½).
-          For a shelf starting at place a with g people on it, m = a + (g − 1) ∕ 2. The percentages on the results page are pull ∕ (n − 1) × 100.</span>
+          <span class="eqline eqsmall">m &nbsp;=&nbsp; <span class="frac"><span>a + (g &minus; 1)</span><span>2</span></span></span>
+          <span class="eqnote">m<sub>X</sub>(Y) — the middle place of the shelf where X put Y. The top shelf counts as place 1, and ties land on halves: a shelf covering places 2 and 3 counts as 2½.
+          Here a is the first place of that shelf and g the number of people on it. The percentages on the results page are pull ∕ (n − 1) × 100.</span>
         </div>
       </div>
 
@@ -780,7 +786,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-11d</span>
+      <span>House Sort · build 2026-11-11e</span>
     </div>
   </footer>
 </div>
@@ -851,8 +857,13 @@ if(!hasCrypto){
 }
 
 /* ═════════ router ═════════ */
-function show(id){
-  for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results","sc-how"]) $(s).hidden = (s!==id);
+let navStack=[];   // where you came from, so Back can return there
+function show(id, fromBack){
+  const screens=["sc-home","sc-setup","sc-vote","sc-reveal","sc-results","sc-how"];
+  const cur=screens.find(s=>!$(s).hidden);
+  if(cur && cur!==id && !fromBack){ navStack.push(cur); if(navStack.length>12) navStack.shift(); }
+  if(id==="sc-home") navStack=[];
+  for (const s of screens) $(s).hidden = (s!==id);
   document.body.classList.toggle("at-home", id==="sc-home");
     const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
   document.querySelectorAll(".step").forEach(el=>{
@@ -886,7 +897,11 @@ function goHome(){
       !confirm("Leave without downloading the key file? Once this tab closes, that key is gone and everyone's invite codes would change if you regenerate.")) return;
   show("sc-home");
 }
-$("backbtn").onclick = goHome;
+$("backbtn").onclick = () => {
+  const prev=navStack.pop();
+  if(prev && prev!=="sc-home") show(prev, true);
+  else goHome();
+};
 $("brand-home").onclick = goHome;
 $("brand-home").addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
 

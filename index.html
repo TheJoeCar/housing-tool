@@ -367,6 +367,28 @@
   .opt .street::after{display:none}          /* no stray ground strip inside result cards */
   #resview .street::after{display:none}      /* nor under the try-a-split builder */
 
+  /* ── score legend + how-it-works links ──────────────── */
+  .legend{margin:12px 0 2px; border:1px dashed var(--border); border-radius:var(--radius-sm);
+    background:rgba(255,255,255,.5); padding:10px 13px; font-size:13px; color:var(--muted)}
+  .legend b{color:var(--ink); font-weight:600}
+  .morelink{
+    background:none; border:none; padding:0; cursor:pointer;
+    font-family:var(--font-body); font-size:inherit; font-weight:600; color:var(--accent);
+    text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px;
+    transition:text-decoration-thickness .12s var(--ease)}
+  .morelink:hover{text-decoration-thickness:2px}
+  .morelink:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .howlink{margin-top:18px; font-size:13px; color:var(--muted)}
+  .howlist{margin:8px 0 0; padding-left:20px; display:flex; flex-direction:column; gap:8px}
+  .howlist li::marker{font-family:var(--font-display); font-weight:700; color:var(--accent)}
+  .defs{margin-top:8px; display:flex; flex-direction:column; gap:7px}
+  .defs div{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+  .defs b{flex:none; width:118px; font-family:var(--font-display); font-weight:600; font-size:13.5px}
+  .defs span{color:var(--muted); font-size:13.5px}
+  @media (max-width:700px){
+    .defs b{width:100%}
+  }
+
   /* ── toast ──────────────────────────────────────────── */
   #toast{
     position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px);
@@ -449,8 +471,9 @@
       </div>
       <div class="promise" data-enter>
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.6" width="14" height="9.4" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.2" r="1.5"/></svg>
-        <span><strong>Nothing leaves your device unencrypted.</strong> Rankings never touch a server — the page does everything locally, chips open only with the one private key, and the results code carries only the scores of the splits it shows — never individual rankings, never a pairwise table.</span>
+        <span><strong>Nothing leaves your device unencrypted.</strong> Rankings never touch a server — the page does everything locally, chips open only with the one private key, and the results code carries only the scores of the splits it shows — never individual rankings, never a who-rated-whom table.</span>
       </div>
+      <p class="howlink" data-enter>Curious how the scores are worked out — or exactly what stays private? <button type="button" class="morelink" data-how>How it works</button></p>
     </div>
   </section>
 
@@ -655,7 +678,7 @@ Paulo</textarea>
   <section class="screen" id="sc-results" hidden>
     <div class="panel">
       <h2>See the splits</h2>
-      <p class="sub">Paste the results code from the group chat. It carries only the scores of the published splits — never an individual ballot, never a pairwise table.</p>
+      <p class="sub">Paste the results code from the group chat. It carries only the scores of the published splits — never an individual ballot, never a who-rated-whom table.</p>
       <div class="field">
         <label for="rcin">Results code</label>
         <textarea id="rcin" rows="7" spellcheck="false" placeholder="H44R1-…"></textarea>
@@ -671,10 +694,57 @@ Paulo</textarea>
     <div class="panel" id="resview" hidden></div>
   </section>
 
+  <!-- ═══ how it works ══════════════════════════════════════ -->
+  <section class="screen" id="sc-how" hidden>
+    <div class="panel">
+      <h2>How House Sort works</h2>
+      <p class="sub">The whole story — the maths, the ranking, and exactly who can see what.</p>
+
+      <div class="field">
+        <h3>The short version</h3>
+        <ol class="howlist">
+          <li><b>Set up.</b> The organiser types the roster, shapes the houses and picks the tie rule, then generates a key file and one private invite code per person. Only the round code (roster, houses and the public half of the key) is ever public.</li>
+          <li><b>Everyone ranks.</b> Each person pastes the round code, checks in with their invite code, and drags names into rows — the top row is who you want as a housemate most. “Create my chip” seals that ranking into one line of encrypted text for the group chat.</li>
+          <li><b>Reveal.</b> When every chip is in, the organiser pastes them together with the key file. The rankings are unsealed in memory, the fairest splits are worked out, and a results code is posted that shows the winning arrangements — without exposing anyone's list.</li>
+        </ol>
+      </div>
+
+      <div class="field">
+        <h3>How a ranking becomes numbers</h3>
+        <p>You rank everyone by dragging them onto <b>shelves</b>. The top shelf is who you want most. When the organiser allows ties, several people can share a shelf — they count as equally wanted, and a big shared shelf pulls a little weaker each, so a large “don't mind” group can't dominate. You never rank yourself; you're not in your own list.</p>
+        <p>For each pair of people the tool works out a <b>pull</b> — how strongly the two are drawn to each other. A connection only counts when <i>both</i> sides feel it: the pull between you and someone is set by whichever of you ranked the other <i>less</i> generously. If you put Ben first but Ben puts you fifth, your mutual pull is a fifth-place pull. A shared shelf counts as the middle of its places — two people on a shelf covering places 2 and 3 each count as place 2½.</p>
+        <p>With eight people, a pull runs from 0 (one of you put the other last) up to 7 (you each put the other first). Every percentage on the results page is that number scaled to 0–100%.</p>
+      </div>
+
+      <div class="field">
+        <h3>The scores on the results page</h3>
+        <div class="defs">
+          <div><b>Person score</b><span>your average pull with your housemates — how happy you'd be in that house.</span></div>
+          <div><b>House average</b><span>the average person score inside that house — how cohesive the house is.</span></div>
+          <div><b>Evenness</b><span>the average person score across the whole group — how good the split is overall.</span></div>
+          <div><b>Weakest link</b><span>the lowest person score anywhere in the split — how the worst-off person fares.</span></div>
+        </div>
+        <p style="margin-top:10px">Splits are ranked by the <b>unhappiest person first</b>, with evenness breaking ties. That's deliberate: a split with a higher average but one miserable person loses to a split where the worst-off person is better off — nobody gets parked as collateral. Showing three good options also means tiny ranking differences can't buy a particular outcome.</p>
+      </div>
+
+      <div class="field">
+        <h3>What stays private — and what doesn't</h3>
+        <p><b>Your chip.</b> Your ranking is sealed with public-key encryption before it leaves your screen. Chips in the chat look like random gibberish, and even two identical rankings produce completely different-looking chips. Only the key file — password-protected — can open them.</p>
+        <p><b>The organiser.</b> They hold the only key. The tool unseals chips in memory, computes the splits and shows arrangements — it never displays anyone's individual ranking — but the organiser is the one person who could look closer. That's the trust this system asks for: choose someone you trust to hold the key.</p>
+        <p><b>The results code.</b> It contains only the scores of the splits it shows — house averages, evenness and weakest link for the organiser's layout, plus the best split for nearby layouts where one bed moves between houses and every house keeps at least three people. It never contains a who-rated-whom table, so nobody can work backwards from it to a ranking. The three-people rule matters: a 2-person house's “average” is really one pair's mutual score, so those layouts are never auto-shared — and the tool warns if the organiser's own layout includes one.</p>
+        <p><b>Nothing is stored.</b> One web page, no server, no database. Rankings never leave your device except as encrypted chips, and closing the tab erases everything. The downloaded key file is the single copy of the private key, sealed with the organiser's passphrase.</p>
+      </div>
+
+      <div class="field">
+        <p class="hint">Technical footnotes: ballots are sealed with RSA-OAEP (2048-bit); the key file is AES-GCM-sealed with PBKDF2 (310,000 iterations); splits are found by trying every legal arrangement when that's under 60,000, otherwise by sampling; ties are only allowed when the organiser permits them, and a chip can't tie the whole field.</p>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-11a</span>
+      <span>House Sort · build 2026-11-11b</span>
     </div>
   </footer>
 </div>
@@ -746,7 +816,7 @@ if(!hasCrypto){
 
 /* ═════════ router ═════════ */
 function show(id){
-  for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results"]) $(s).hidden = (s!==id);
+  for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results","sc-how"]) $(s).hidden = (s!==id);
     const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
   document.querySelectorAll(".step").forEach(el=>{
     el.classList.toggle("on", step!=null && +el.dataset.step===step);
@@ -757,6 +827,18 @@ function show(id){
 $("go-setup").onclick = () => { if(hasCrypto){ initSetup(); show("sc-setup"); } };
 $("go-vote").onclick  = () => { if(hasCrypto){ resetVote(); show("sc-vote"); } };
 $("go-results").onclick = () => { if(hasCrypto){ resetViewer(); show("sc-results"); } };
+document.addEventListener("click",(e)=>{
+  const b=e.target.closest("[data-how]");
+  if(b) show("sc-how");
+});
+function scoreLegend(){
+  const d=document.createElement("div"); d.className="legend";
+  d.innerHTML=`<b>What the scores mean:</b> <b>House average</b> — how well everyone in that house gets along ·
+    <b>Evenness</b> — average happiness across the whole group · <b>Weakest link</b> — how the least happy
+    person fares. Splits are ranked with the least happy person first.
+    <button type="button" class="morelink" data-how>Find out more</button>`;
+  return d;
+}
 $("btn-done-setup").onclick = () => { resetReveal(); show("sc-reveal"); };
 
 /* the logo goes back to the front page; a freshly minted but unsaved key needs one confirm */
@@ -1769,16 +1851,17 @@ function renderRevealResults(box, res, top, alts=[]){
   head.innerHTML=`<h2>The fairest splits for ${fmtLayout(res.layout)}</h2>
     <p class="sub">Ranked by the unhappiest household member first — nobody's parked as collateral. Post the results code, not the scores.</p>`;
   box.appendChild(head);
+  box.appendChild(scoreLegend());
   renderTopCards(el => box.appendChild(el), res, top);
   const warn = res.layout.some(sz=>sz<3)
-    ? " This layout includes a 2-bed house — its house average is one pair's pull, so treat the posted scores with that in mind." : "";
+    ? " Heads-up: this layout includes a 2-bed house, and a house that small scores a single pair of friends." : "";
   const altNote = alts.length
-    ? ` The code also carries the best split for each one-bed shift with every house holding 3+: ${alts.map(a=>fmtLayout(a.layout)).join(", ")}.`
-    : " This shape has no one-bed shift that keeps every house at 3+ beds, so no alternatives are included.";
+    ? ` It also includes the best split for nearby layouts — one bed moved between houses, none dropping below three people: ${alts.map(a=>fmtLayout(a.layout)).join(", ")}.`
+    : " This shape has no one-bed shift that keeps every house at three or more people, so no alternatives are included.";
   const wrap=document.createElement("div"); wrap.className="field";
   wrap.innerHTML=`<label for="rcout">Results code for the group chat — opens for everyone, needs no key</label>
     <textarea id="rcout" rows="5" readonly spellcheck="false"></textarea>
-    <p class="hint">Contains the roster, the layout and the scores of the splits it shows.${altNote} The pairwise table and every individual ballot stay on this machine — nobody can mine the code for who ranked whom.${warn}</p>`;
+    <p class="hint">Contains the roster, the layout and the scores of the splits it shows.${altNote} The who-rated-whom table and every individual ballot stay on this machine — nobody can work the code back into anyone's ranking.${warn}</p>`;
   const acts=document.createElement("div"); acts.className="actions";
   const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy results code";
   const rc=packJSON(resultsPayload(res, top, alts), RESULTS_PREFIX);
@@ -1908,13 +1991,14 @@ function viewerRenderScores(){
   head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
     <p class="sub">Ranked by the unhappiest household member first.</p>`;
   cards.appendChild(head);
+  cards.appendChild(scoreLegend());
   renderTopCards(c=>cards.appendChild(c), viewer, viewer.options);
 
   const altBox=box.querySelector("#vp-alts");
   if(viewer.alts.length){
     const h=document.createElement("h3"); h.style.marginTop="26px"; h.textContent="Shift a bed between houses";
     const p=document.createElement("p"); p.className="sub";
-    p.textContent="Pre-computed from the real ballots when the results were made — one bed moved between houses. Only shapes where every house holds 3+ beds are shared, so no single pair's pull is ever published.";
+    p.textContent="One bed moved between houses — see how the groups change. Every house keeps at least three people, so no score here is about a single pair.";
     altBox.append(h,p);
     viewer.alts.forEach(a=>{
       const lab=document.createElement("div"); lab.style.marginTop="18px";
@@ -1924,7 +2008,7 @@ function viewerRenderScores(){
     });
   }else{
     const p=document.createElement("p"); p.className="sub"; p.style.marginTop="26px";
-    p.textContent="No one-bed shifts are shared for this shape — every neighbouring layout would put fewer than 3 people in a house, and a 2-person house's score is one pair's pull.";
+    p.textContent="No one-bed shifts for this shape — moving a bed anywhere would leave a house with fewer than three people, and a house that small would score a single pair of friends.";
     altBox.appendChild(p);
   }
 
@@ -1964,6 +2048,7 @@ function viewerRender(animate){
   head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
     <p class="sub">Ranked by the unhappiest household member first.</p>`;
   cards.innerHTML=""; cards.appendChild(head);
+  cards.appendChild(scoreLegend());
   renderTopCards(c=>cards.appendChild(c), viewer, top);
 
   // playground: option 1 as the standing arrangement

@@ -59,6 +59,9 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
   shape (every house 3+ beds). Only what's in the code is shown — nothing is recomputed,
   because the code carries no pairwise table. (Legacy results codes from before this change
   still open, and they alone offer the live layout playground, since they carry the matrix.)
+- The scores are explained in one line on the results page itself (**What the scores mean**),
+  and a plain-language **How it works** page — linked from the front page and from every
+  results page — explains the maths, the ranking and the privacy model in full.
 
 ## Why your vote can't be gamed
 

@@ -383,6 +383,17 @@
   .eq .eqsmall{display:block; margin-top:12px; font-size:15.5px}
   .eq .eqnote{display:block; margin-top:10px; font-size:12.5px; color:var(--muted)}
   .eq sub{font-size:.62em}
+  .eqwhere{display:flex; flex-direction:column; gap:8px; margin:16px auto 0; max-width:560px;
+    font-size:13.5px; text-align:left}
+  .eqwhere div{display:flex; gap:12px; align-items:baseline}
+  .eqwhere i{flex:none; width:74px; text-align:right; font-family:Georgia,'Times New Roman',serif;
+    font-style:italic; font-size:15.5px; color:var(--ink)}
+  .eqwhere i sub{font-size:.62em}
+  .eqwhere span{color:var(--muted)}
+  @media (max-width:700px){
+    .eqwhere div{flex-direction:column; gap:2px}
+    .eqwhere i{width:auto; text-align:left}
+  }
   .frac{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle;
     margin:0 5px; line-height:1.15}
   .frac>span{padding:0 7px}
@@ -749,13 +760,18 @@ Paulo</textarea>
         <h3>How a ranking becomes numbers</h3>
         <p>You rank everyone by dragging them onto <b>shelves</b>. The top shelf is who you want most. When the organiser allows ties, several people can share a shelf — they count as equally wanted, and a big shared shelf pulls a little weaker each, so a large “don't mind” group can't dominate. You never rank yourself; you're not in your own list.</p>
         <p>For each pair of people the tool works out a <b>pull</b> — how strongly the two are drawn to each other. A connection only counts when <i>both</i> sides feel it: the pull between you and someone is set by whichever of you ranked the other <i>less</i> generously. If you put Ben first but Ben puts you fifth, your mutual pull is a fifth-place pull. A shared shelf counts as the middle of its places — two people on a shelf covering places 2 and 3 each count as place 2½.</p>
-        <p>With eight people, a pull runs from 1 (one of you put the other last) up to 7 (you each put the other first).</p>
+        <p>With eight people, a pull runs from 1 (one of you put the other last) up to 7 (you each put the other first).<br></p>
         <div class="eq">
           <span class="eqline">pull(A, B) &nbsp;=&nbsp; n &minus; max( m<sub>A</sub>(B),&nbsp; m<sub>B</sub>(A) )</span>
-          <span class="eqline eqsmall">m &nbsp;=&nbsp; <span class="frac"><span>a + (g &minus; 1)</span><span>2</span></span></span>
-          <span class="eqnote">m<sub>X</sub>(Y) — the middle place of the shelf where X put Y. The top shelf counts as place 1, and ties land on halves: a shelf covering places 2 and 3 counts as 2½.
-          Here a is the first place of that shelf and g the number of people on it. The percentages on the results page are pull ∕ (n − 1) × 100.</span>
+          <span class="eqline eqsmall">where &nbsp; m &nbsp;=&nbsp; <span class="frac"><span>a + (g &minus; 1)</span><span>2</span></span></span>
         </div>
+        <div class="eqwhere">
+          <div><i>n</i><span>the number of people in the group. With eight, places run from 1 (top shelf) to 7 (bottom).</span></div>
+          <div><i>m<sub>A</sub>(B)</i><span>the middle place of the shelf where A put B. The top shelf counts as place 1, and ties land on the middle of their places — a shelf covering places 2 and 3 counts as 2½.</span></div>
+          <div><i>a</i><span>the first (highest) place of that shelf.</span></div>
+          <div><i>g</i><span>the number of people sharing that shelf.</span></div>
+        </div>
+        <p style="margin-top:10px"><br>For example, with eight people: A puts B on a shelf covering places 2 and 3 (m = 2½), while B puts A top of their list (m = 1). Then pull(A, B) = 8 − 2½ = 5½ — about 79%. Every percentage on the results page is a pull divided by the biggest possible pull (n − 1), times 100.</p>
       </div>
 
       <div class="field">

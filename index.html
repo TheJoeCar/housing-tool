@@ -38,7 +38,7 @@
   ::selection{background:#CFE3D7}
 
   /* ── header ─────────────────────────────────────────── */
-  header{padding:26px 0 6px}
+  header{padding:26px 0 6px; position:relative}
   .brand{display:flex; align-items:center; gap:11px; cursor:pointer; border-radius:10px; padding:3px 6px 3px 3px; margin:-3px 0 0 -9px}
   .brand:hover{background:rgba(47,107,79,.06)}
   .brand:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
@@ -371,6 +371,32 @@
   .legend{margin:12px 0 2px; border:1px dashed var(--border); border-radius:var(--radius-sm);
     background:rgba(255,255,255,.5); padding:10px 13px; font-size:13px; color:var(--muted)}
   .legend b{color:var(--ink); font-weight:600}
+  .legend div{margin-top:4px}
+  .legend div.hd{margin-top:0; font-weight:600; color:var(--ink)}
+  .legend .morelink{display:inline-block; margin-top:7px}
+  .livehint{font-size:12.5px; margin-top:6px; color:var(--muted); min-height:1em}
+  .livehint.ok{color:var(--accent)}
+  .livehint.bad{color:var(--danger)}
+  .eq{margin:16px auto 6px; text-align:center}
+  .eq .eqline{display:block; font-family:Georgia,'Times New Roman',serif; font-style:italic;
+    font-size:18.5px; color:var(--ink)}
+  .eq .eqnote{display:block; margin-top:8px; font-size:12.5px; color:var(--muted)}
+  .eq sub{font-size:.62em}
+
+  /* ── back button: floats beside the panel on desktop, sits in the header on phones ── */
+  #backbtn{
+    display:none; position:absolute; right:0; top:2px; width:42px; height:42px;
+    place-items:center; border-radius:999px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); cursor:pointer; box-shadow:var(--shadow);
+    transition:transform .15s var(--ease), box-shadow .15s var(--ease), border-color .15s var(--ease);
+  }
+  body:not(.at-home) #backbtn{display:grid}
+  #backbtn:hover{transform:translateX(-2px); border-color:var(--accent); color:var(--accent)}
+  #backbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  @media (min-width:904px){
+    #backbtn{position:fixed; top:146px; right:auto; left:max(8px, calc(50% - 452px))}
+    #backbtn:hover{transform:translateY(-2px)}
+  }
   .morelink{
     background:none; border:none; padding:0; cursor:pointer;
     font-family:var(--font-body); font-size:inherit; font-weight:600; color:var(--accent);
@@ -431,13 +457,16 @@
   }
 </style>
 </head>
-<body>
+<body class="at-home">
 <div class="wrap">
   <header>
     <div class="brand" id="brand-home" role="button" tabindex="0" aria-label="Back to the front page" title="Back to the front page">
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#2F6B4F"/><path d="M6 16l7-5.6L20 16v7.4a.6.6 0 0 1-.6.6h-3.9v-4.4h-2.4v4.4H6.6a.6.6 0 0 1-.6-.6z" fill="#F6F4EE"/><path d="M20.6 16.4l4.9-3.8 4.9 3.8v5.4c0 .4-.3.7-.7.7h-2.2v-2.9h-2.6v2.9h-2.2c-.4 0-.7-.3-.7-.7z" fill="#F6F4EE" opacity=".82"/></svg>
       <div><strong>House&nbsp;Sort</strong><br><span>Any group, any houses, zero visible votes</span></div>
     </div>
+    <button type="button" id="backbtn" aria-label="Back to the start" title="Back to the start">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+    </button>
     <div class="steps" aria-label="How it works">
       <span class="step" data-step="1"><i>1</i><span>Set up the vote</span></span>
       <span class="step" data-step="2"><i>2</i><span>Everyone ranks</span></span>
@@ -449,7 +478,7 @@
   <section class="screen" id="sc-home">
     <div class="gate">
       <h1 data-enter>Pick the houses without picking fights</h1>
-      <p class="lede" data-enter>Everyone ranks the group — strict order, or the tie levels the organiser picked. Rankings travel as encrypted chips in the group chat. One trusted key holder turns the chips into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
+      <p class="lede" data-enter>Everyone ranks the group in secret. The rankings travel as encrypted chips in the group chat, and one trusted key holder turns them into the fairest split for any layout you name — quiet arithmetic, no numbered scores, no blaming.</p>
       <div class="landing">
         <button id="go-vote" type="button" class="hero start" data-enter>
           <span class="pick">Start here</span>
@@ -596,6 +625,7 @@ Paulo</textarea>
         <div class="field">
           <label for="vin-code">Your private invite code</label>
           <input type="text" id="vin-code" maxlength="8" autocomplete="off" spellcheck="false" placeholder="e.g. K4Q7XP" style="width:220px; text-transform:uppercase; font-family:var(--font-mono); letter-spacing:.07em">
+          <p class="livehint" id="vin-code-live"></p>
           <p class="hint">The one the organiser DM'd you — alone it says nothing about preferences. Not the round code.</p>
         </div>
         <div class="actions" style="margin-top:18px">
@@ -682,6 +712,7 @@ Paulo</textarea>
       <div class="field">
         <label for="rcin">Results code</label>
         <textarea id="rcin" rows="7" spellcheck="false" placeholder="H44R1-…"></textarea>
+        <p class="livehint" id="rc-live"></p>
       </div>
       <div class="actions">
         <button type="button" class="btn primary" id="btn-open-results">
@@ -713,7 +744,12 @@ Paulo</textarea>
         <h3>How a ranking becomes numbers</h3>
         <p>You rank everyone by dragging them onto <b>shelves</b>. The top shelf is who you want most. When the organiser allows ties, several people can share a shelf — they count as equally wanted, and a big shared shelf pulls a little weaker each, so a large “don't mind” group can't dominate. You never rank yourself; you're not in your own list.</p>
         <p>For each pair of people the tool works out a <b>pull</b> — how strongly the two are drawn to each other. A connection only counts when <i>both</i> sides feel it: the pull between you and someone is set by whichever of you ranked the other <i>less</i> generously. If you put Ben first but Ben puts you fifth, your mutual pull is a fifth-place pull. A shared shelf counts as the middle of its places — two people on a shelf covering places 2 and 3 each count as place 2½.</p>
-        <p>With eight people, a pull runs from 0 (one of you put the other last) up to 7 (you each put the other first). Every percentage on the results page is that number scaled to 0–100%.</p>
+        <p>With eight people, a pull runs from 1 (one of you put the other last) up to 7 (you each put the other first).</p>
+        <div class="eq">
+          <span class="eqline">pull(A, B) &nbsp;=&nbsp; n &minus; max( m<sub>A</sub>(B),&nbsp; m<sub>B</sub>(A) )</span>
+          <span class="eqnote">m<sub>X</sub>(Y) is the middle place of the shelf where X put Y — the top shelf counts as place 1, and ties land on halves (a shelf covering places 2 and 3 counts as 2½).
+          For a shelf starting at place a with g people on it, m = a + (g − 1) ∕ 2. The percentages on the results page are pull ∕ (n − 1) × 100.</span>
+        </div>
       </div>
 
       <div class="field">
@@ -730,7 +766,7 @@ Paulo</textarea>
       <div class="field">
         <h3>What stays private — and what doesn't</h3>
         <p><b>Your chip.</b> Your ranking is sealed with public-key encryption before it leaves your screen. Chips in the chat look like random gibberish, and even two identical rankings produce completely different-looking chips. Only the key file — password-protected — can open them.</p>
-        <p><b>The organiser.</b> They hold the only key. The tool unseals chips in memory, computes the splits and shows arrangements — it never displays anyone's individual ranking — but the organiser is the one person who could look closer. That's the trust this system asks for: choose someone you trust to hold the key.</p>
+        <p><b>The organiser.</b> They hold the only key, and the tool uses it for exactly one job: unsealing chips in memory to work out the splits. Individual rankings are never shown, stored, or sent — the only output is arrangements. That's why the key lives with someone everyone trusts.</p>
         <p><b>The results code.</b> It contains only the scores of the splits it shows — house averages, evenness and weakest link for the organiser's layout, plus the best split for nearby layouts where one bed moves between houses and every house keeps at least three people. It never contains a who-rated-whom table, so nobody can work backwards from it to a ranking. The three-people rule matters: a 2-person house's “average” is really one pair's mutual score, so those layouts are never auto-shared — and the tool warns if the organiser's own layout includes one.</p>
         <p><b>Nothing is stored.</b> One web page, no server, no database. Rankings never leave your device except as encrypted chips, and closing the tab erases everything. The downloaded key file is the single copy of the private key, sealed with the organiser's passphrase.</p>
       </div>
@@ -744,7 +780,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-11b</span>
+      <span>House Sort · build 2026-11-11d</span>
     </div>
   </footer>
 </div>
@@ -817,6 +853,7 @@ if(!hasCrypto){
 /* ═════════ router ═════════ */
 function show(id){
   for (const s of ["sc-home","sc-setup","sc-vote","sc-reveal","sc-results","sc-how"]) $(s).hidden = (s!==id);
+  document.body.classList.toggle("at-home", id==="sc-home");
     const step = {"sc-setup":1,"sc-vote":2,"sc-reveal":3,"sc-results":3}[id] || null;
   document.querySelectorAll(".step").forEach(el=>{
     el.classList.toggle("on", step!=null && +el.dataset.step===step);
@@ -833,9 +870,10 @@ document.addEventListener("click",(e)=>{
 });
 function scoreLegend(){
   const d=document.createElement("div"); d.className="legend";
-  d.innerHTML=`<b>What the scores mean:</b> <b>House average</b> — how well everyone in that house gets along ·
-    <b>Evenness</b> — average happiness across the whole group · <b>Weakest link</b> — how the least happy
-    person fares. Splits are ranked with the least happy person first.
+  d.innerHTML=`<div class="hd">What the scores mean</div>
+    <div><b>House average</b> — how well everyone in that house gets along</div>
+    <div><b>Evenness</b> — average happiness across the whole group</div>
+    <div><b>Weakest link</b> — how the least happy person fares; splits are ranked with them first</div>
     <button type="button" class="morelink" data-how>Find out more</button>`;
   return d;
 }
@@ -848,6 +886,7 @@ function goHome(){
       !confirm("Leave without downloading the key file? Once this tab closes, that key is gone and everyone's invite codes would change if you regenerate.")) return;
   show("sc-home");
 }
+$("backbtn").onclick = goHome;
 $("brand-home").onclick = goHome;
 $("brand-home").addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
 
@@ -1162,7 +1201,7 @@ function playDots(container, before){
 }
 
 /* a full street of houses; houses = [{members:[ix], pct?}], mode "dots"|"tokens" */
-function renderStreet(box, roster, houses, {mode="tokens", meters=false, staggerBase=0, flipFrom=null}={}){
+function renderStreet(box, roster, houses, {mode="tokens", meters=false, staggerBase=0, flipFrom=null, pctHue=false}={}){
   const flipSince = flipFrom!==null ? flipFrom : captureDots(box);
   box.querySelectorAll(".bld, .adder").forEach(e=>e.remove());
   houses.forEach((h,hi)=>{
@@ -1191,8 +1230,11 @@ function renderStreet(box, roster, houses, {mode="tokens", meters=false, stagger
     }
     if(meters && h.pct!=null){
       const m=document.createElement("div"); m.className="meter";
+      const barHue = pctHue
+        ? Math.max(0, Math.min(135, Math.round(h.pct*1.3 - 5)))   // red at low scores, green at high
+        : hueOf(roster[h.members[0]]||roster[0]);
       m.innerHTML=`<div class="sc"><span>house average</span><span>${h.pct}%</span></div>
-        <div class="bar"><i style="--h:${hueOf(roster[h.members[0]]||roster[0])};--w:${h.pct}%"></i></div>`;
+        <div class="bar"><i style="--h:${barHue};--w:${h.pct}%"></i></div>`;
       bld.appendChild(m);
     }
     const plate=document.createElement("div"); plate.className="plate"; plate.textContent="House "+(hi+1);
@@ -1398,14 +1440,21 @@ function resetVote(){
 $("vin-round").addEventListener("input", async ()=>{
   const ok=$("vin-pub-ok"), er=$("vin-pub-err"), st=$("vin-status");
   ok.classList.remove("show"); er.classList.remove("show");
+  st.textContent="";
   vRound=null; vPub=null; $("vin-form").hidden=true; $("vin-rank").hidden=true;
   const t=$("vin-round").value;
   const m=(t.match(ROUND_RE)||[])[0];
+  if(m && m.length<90){
+    st.textContent="Keep going — paste the whole round code in one go; it's a single long line starting H44S1-.";
+    return;
+  }
   if(!m){
     if(t.includes(RESULTS_PREFIX))
       st.textContent="That's a results code (H44R1-) — for viewing splits. You need the ROUND code (H44S1-) the organiser posted at the start.";
     else if(t.includes(CHIP_PREFIX))
       st.textContent="Those are ballot chips — the round code is the message that starts H44S1-";
+    else if(/^\s*h44s1/i.test(t))
+      st.textContent="Keep going — paste the whole round code in one go; it's a single long line starting H44S1-.";
     else
       st.textContent=`Waiting for the round code — the group-chat message starting ${ROUND_PREFIX}`;
     return;
@@ -1429,7 +1478,7 @@ $("vin-round").addEventListener("input", async ()=>{
     vRoster.forEach((n,i)=>{ const opt=document.createElement("option"); opt.value=n; opt.textContent=n; opt.dataset.ix=i; sel.appendChild(opt); });
     $("vin-form").hidden=false;
   }catch(e){
-    er.textContent="That round code is damaged — copy the whole message from the group chat again.";
+    er.textContent="That round code didn't open — it may be cut off. Copy the whole group-chat message, starting H44S1-, and paste it in one go.";
     er.classList.add("show");
   }
 });
@@ -1456,6 +1505,12 @@ $("btn-checkin").onclick=()=>{
 $("vin-code").addEventListener("input", ()=>{
   $("vin-rank").hidden=true;
   $("vin-start-err").classList.remove("show");
+  const el=$("vin-code-live"), v=$("vin-code").value.trim().toUpperCase();
+  if(!v){ el.textContent=""; el.className="livehint"; }
+  else if(!/^[A-Z0-9]+$/.test(v)){ el.textContent="Letters and digits only — no spaces or punctuation."; el.className="livehint bad"; }
+  else if(v.length>6){ el.textContent="That's longer than 6 — check for stray characters."; el.className="livehint bad"; }
+  else if(v.length<6){ el.textContent=`${6-v.length} more character${6-v.length===1?"":"s"} — invite codes are 6 letters/digits, like K4Q7XP.`; el.className="livehint"; }
+  else { el.textContent="Looks like an invite code — hit Check in & start ranking."; el.className="livehint ok"; }
 });
 $("vin-code").addEventListener("keydown",(e)=>{ if(e.key==="Enter") $("btn-checkin").click(); });
 
@@ -1771,24 +1826,34 @@ $("re-rank").onclick=()=>{ $("chipout").hidden=true; $board().scrollIntoView({be
 $("cp-chip").onclick=()=>copyText($("chip-txt").value,"Chip copied — post it in the chat, once");
 
 /* ═════════ reveal screen ═════════ */
-let keyFile=null, privKey=null, lastResults=null;
+let keyFile=null, privKey=null, lastResults=null, chipNeed=0;
 
 function resetReveal(){
   $("rf").value=""; keyFile=null; privKey=null; lastResults=null;
-  $("pp2").value=""; $("chips-in").value=""; $("chipcount").textContent="";
+  $("pp2").value=""; $("chips-in").value=""; $("chipcount").textContent=""; chipNeed=0;
   $("rev-err").classList.remove("show"); $("results").hidden=true;
 }
 $("btn-pickfile").onclick=()=>$("keyfile").click();
 $("keyfile").addEventListener("change",(e)=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=()=>{ keyFile=r.result; $("rf").value=f.name; };
+  r.onload=()=>{ keyFile=r.result; $("rf").value=f.name;
+    try{ chipNeed=(JSON.parse(r.result).roster||[]).length; }catch{ chipNeed=0; }
+    $("chips-in").dispatchEvent(new Event("input"));
+  };
   r.onerror=()=>{ keyFile=null; $("rf").value=""; };
   r.readAsText(f);
 });
 $("chips-in").addEventListener("input",()=>{
   const found=[...new Set($("chips-in").value.match(CHIP_RE)||[])];
-  $("chipcount").textContent=found.length?`${found.length} chip${found.length===1?"":"s"} pasted`:"";
+  let t="";
+  if(found.length){
+    t=`${found.length} chip${found.length===1?"":"s"} pasted`;
+    if(chipNeed) t+= found.length>=chipNeed ? " — that's everyone, ready to reveal" : ` — ${chipNeed-found.length} more to go`;
+  }else if(chipNeed){
+    t=`Paste the chips from the group chat — one per person, ${chipNeed} in total. They start ${CHIP_PREFIX}`;
+  }
+  $("chipcount").textContent=t;
 });
 $("btn-reveal").onclick=async ()=>{
   const err=$("rev-err"); err.classList.remove("show"); err.textContent="";
@@ -1910,7 +1975,7 @@ function renderTopCards(append, res, top, labelFn){
       <div class="optstreet"><div class="street ground"></div></div>`;
     append(card);
     const street=card.querySelector(".street");
-    renderStreet(street, res.roster, op.houses.map((m,i)=>({members:m, pct:op.hpc[i]})), {mode:"tokens", meters:true, staggerBase:idx*160});
+    renderStreet(street, res.roster, op.houses.map((m,i)=>({members:m, pct:op.hpc[i]})), {mode:"tokens", meters:true, pctHue:true, staggerBase:idx*160});
   });
 }
 
@@ -1920,6 +1985,16 @@ const viewer={ n:0, roster:[], w:null, layout:[], options:[], alts:[],
 
 function resetViewer(){ $("rcin").value=""; $("res-err").classList.remove("show"); $("resview").hidden=true; }
 
+$("rcin").addEventListener("input", ()=>{
+  const el=$("rc-live"), t=$("rcin").value.trim();
+  if(!t){ el.textContent=""; el.className="livehint"; return; }
+  if(t.includes(ROUND_PREFIX)){ el.textContent="That's a round code (H44S1-) — for voting. The results code starts H44R1-, from the organiser's reveal."; el.className="livehint bad"; return; }
+  if(t.includes(CHIP_PREFIX)){ el.textContent="Those are ballot chips — you want the results code starting H44R1-."; el.className="livehint bad"; return; }
+  const rc=(t.match(RESULTS_RE)||[])[0];
+  if(/^h44r1/i.test(t) && (!rc || rc.length<90)){ el.textContent="Keep going — paste the whole results code; it's a single long line starting H44R1-."; el.className="livehint"; return; }
+  if(rc){ el.textContent="Looks like a results code — hit Show the splits."; el.className="livehint ok"; return; }
+  el.textContent="Results codes start H44R1- — paste the line the organiser posted."; el.className="livehint";
+});
 $("btn-open-results").onclick=()=>{
   const err=$("res-err"); err.classList.remove("show");
   const m=($("rcin").value.match(RESULTS_RE)||[])[0];
@@ -2054,7 +2129,7 @@ function viewerRender(animate){
   // playground: option 1 as the standing arrangement
   const vb=$("vp-builder");
   const before=captureDots(vb);
-  renderStreet(vb, viewer.roster, top[0].houses.map((m,i)=>({members:m, pct:top[0].hpc[i]})), {mode:"dots", meters:true});
+  renderStreet(vb, viewer.roster, top[0].houses.map((m,i)=>({members:m, pct:top[0].hpc[i]})), {mode:"dots", meters:true, pctHue:true});
   vb.querySelectorAll(".bld").forEach((bld,hi)=>{
     const st=document.createElement("div"); st.className="stepper";
     const minus=document.createElement("button"); minus.type="button"; minus.className="mv"; minus.textContent="−";

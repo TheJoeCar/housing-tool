@@ -62,6 +62,10 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 - The scores are explained in one line on the results page itself (**What the scores mean**),
   and a plain-language **How it works** page — linked from the front page and from every
   results page — explains the maths, the ranking and the privacy model in full.
+- A round **Back** button floats beside the content on desktop (and sits top-right in the
+  header on phones), returning to the front page from every screen.
+- Boxes that take codes give live feedback while you type — wrong type of code, incomplete
+  paste, or ready-to-submit — plus a running chip count against the expected total at reveal.
 
 ## Why your vote can't be gamed
 

@@ -377,12 +377,26 @@
   .livehint{font-size:12.5px; margin-top:6px; color:var(--muted); min-height:1em}
   .livehint.ok{color:var(--accent)}
   .livehint.bad{color:var(--danger)}
+  .mathboard{
+    margin:18px auto 6px; max-width:640px; text-align:center;
+    background:linear-gradient(180deg,#3E4841,#36403A);
+    border-radius:var(--radius); padding:20px 18px 18px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(0,0,0,.18),
+      0 12px 26px -16px rgba(27,28,24,.55);
+  }
+  .mathboard .eq{margin:0}
+  .mathboard .eq .eqline{color:#F2EFE3; text-shadow:0 0 1px rgba(242,239,227,.3)}
+  .mathboard .eq .eqsmall{color:rgba(242,239,227,.85)}
+  .mathboard .eqwhere{margin:16px auto 0; max-width:520px}
+  .mathboard .eqwhere i{color:#F2EFE3}
+  .mathboard .eqwhere span{color:rgba(242,239,227,.78)}
   .eq{margin:16px auto 6px; text-align:center}
   .eq .eqline{display:block; font-family:Georgia,'Times New Roman',serif; font-style:italic;
     font-size:18.5px; color:var(--ink)}
   .eq .eqsmall{display:block; margin-top:12px; font-size:15.5px}
   .eq .eqnote{display:block; margin-top:10px; font-size:12.5px; color:var(--muted)}
   .eq sub{font-size:.62em}
+  .eq .nb{white-space:nowrap}
   .eqwhere{display:flex; flex-direction:column; gap:8px; margin:16px auto 0; max-width:560px;
     font-size:13.5px; text-align:left}
   .eqwhere div{display:flex; gap:12px; align-items:baseline}
@@ -391,6 +405,8 @@
   .eqwhere i sub{font-size:.62em}
   .eqwhere span{color:var(--muted)}
   @media (max-width:700px){
+    .eq .eqline{font-size:16px}
+    .eq .eqsmall{font-size:14px}
     .eqwhere div{flex-direction:column; gap:2px}
     .eqwhere i{width:auto; text-align:left}
   }
@@ -761,8 +777,9 @@ Paulo</textarea>
         <p>You rank everyone by dragging them onto <b>shelves</b>. The top shelf is who you want most. When the organiser allows ties, several people can share a shelf — they count as equally wanted, and a big shared shelf pulls a little weaker each, so a large “don't mind” group can't dominate. You never rank yourself; you're not in your own list.</p>
         <p>For each pair of people the tool works out a <b>pull</b> — how strongly the two are drawn to each other. A connection only counts when <i>both</i> sides feel it: the pull between you and someone is set by whichever of you ranked the other <i>less</i> generously. If you put Ben first but Ben puts you fifth, your mutual pull is a fifth-place pull. A shared shelf counts as the middle of its places — two people on a shelf covering places 2 and 3 each count as place 2½.</p>
         <p>With eight people, a pull runs from 1 (one of you put the other last) up to 7 (you each put the other first).<br></p>
+        <div class="mathboard">
         <div class="eq">
-          <span class="eqline">pull(A, B) &nbsp;=&nbsp; n &minus; max( m<sub>A</sub>(B),&nbsp; m<sub>B</sub>(A) )</span>
+          <span class="eqline">pull(A, B) &nbsp;=&nbsp; n &minus; <span class="nb">max( m<sub>A</sub>(B),&nbsp; m<sub>B</sub>(A) )</span></span>
           <span class="eqline eqsmall">where &nbsp; m &nbsp;=&nbsp; <span class="frac"><span>a + (g &minus; 1)</span><span>2</span></span></span>
         </div>
         <div class="eqwhere">
@@ -771,7 +788,8 @@ Paulo</textarea>
           <div><i>a</i><span>the first (highest) place of that shelf.</span></div>
           <div><i>g</i><span>the number of people sharing that shelf.</span></div>
         </div>
-        <p style="margin-top:10px"><br>For example, with eight people: A puts B on a shelf covering places 2 and 3 (m = 2½), while B puts A top of their list (m = 1). Then pull(A, B) = 8 − 2½ = 5½ — about 79%. Every percentage on the results page is a pull divided by the biggest possible pull (n − 1), times 100.</p>
+        </div>
+        <p style="margin-top:14px"><br>For example, with eight people: A puts B on a shelf covering places 2 and 3 (m = 2½), while B puts A top of their list (m = 1). Then pull(A, B) = 8 − 2½ = 5½ — about 79%. Every percentage on the results page is a pull divided by the biggest possible pull (n − 1), times 100.</p>
       </div>
 
       <div class="field">

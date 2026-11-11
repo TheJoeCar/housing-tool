@@ -29,7 +29,9 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 4. When everyone's chips are in the chat: paste the chips + key file + passphrase →
    *Reveal arrangements*.
 5. Post the **results code** (`H44R1-…`) in the chat. It contains only the roster, the layout
-   and the aggregate pull between each pair — never an individual ranking.
+   and the scores of the splits it shows — the main layout's top three, plus the best split for
+   each one-bed shift where every house keeps 3+ beds. No ballots and no pairwise table ever
+   leave the organiser's machine.
 
 **Each friend:**
 
@@ -52,9 +54,11 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 
 - Open the tool → *See the splits* → paste the results code. No key needed.
 - Every screen: the House Sort logo in the header takes you back to the start.
-- The viewer also has a **live layout playground**: move beds between houses (or tap a preset
-  like *3 + 5*) and the best groupings recompute instantly — no revote. Perfect for "what if we
-  do 3 + 5 instead of 4 + 4?"
+- The viewer shows the published splits read-only: the main layout's top three, plus a
+  **shift a bed between houses** section with the pre-computed best split for each neighbouring
+  shape (every house 3+ beds). Only what's in the code is shown — nothing is recomputed,
+  because the code carries no pairwise table. (Legacy results codes from before this change
+  still open, and they alone offer the live layout playground, since they carry the matrix.)
 
 ## Why your vote can't be gamed
 
@@ -63,8 +67,12 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
   three friends means nothing unless they did the same back.
 - **Anonymity.** Chips are randomized RSA-OAEP ciphertexts — identical ballots look completely
   different in chat. Only the organiser's key opens them, and decrypted ballots are never
-  rendered, stored, or sent: the tool shows arrangements only. The results code carries just
-  the pair-pull matrix, so the public can't reconstruct anyone's list.
+  rendered, stored, or sent: the tool shows arrangements only. The results code carries only
+  the published splits' scores — house averages and summary percentages, never a pairwise
+  table — so it can't be mined for who ranked whom. (A group member who knows their own vote
+  can still bound some pairwise pulls from aggregate scores; no aggregate scheme can avoid
+  that entirely, which is why the smallest published house is 3 beds and the raw matrix is
+  never shared.)
 - **No revisions.** Chips are final once posted; the reveal needs every code. Duplicate chips
   pasted twice are safely ignored.
 - **Maximin ordering.** Splits are ranked by the unhappiest household member first, so nobody
@@ -81,7 +89,8 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 - RSA-OAEP (SHA-256, 2048-bit) ballots; the private key is AES-GCM-sealed with the passphrase
   (PBKDF2, 310k iterations) inside the JSON key file.
 - Code formats: `H44S1-` round code (roster + layout + public key), `H44C1-` chip (one
-  encrypted ballot), `H44R1-` results code (roster + layout + pair-weight matrix only).
+  encrypted ballot), `H44R1-` results code (v2: roster + layout + the published splits'
+  scores only — no pairwise matrix; legacy v1 codes carried the matrix and still open).
 - Scoring: exact enumeration of all legal splits when the partition space allows (up to
   60 000), otherwise random sampling; person score = mean mutual weight with housemates;
   maximin ordering with mean tiebreak.

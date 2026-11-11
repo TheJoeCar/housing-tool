@@ -449,7 +449,7 @@
       </div>
       <div class="promise" data-enter>
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.6" width="14" height="9.4" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.2" r="1.5"/></svg>
-        <span><strong>Nothing leaves your device unencrypted.</strong> Rankings never touch a server — the page does everything locally, chips open only with the one private key, and the results code carries only how strongly pairs of friends pull towards each other, never individual rankings.</span>
+        <span><strong>Nothing leaves your device unencrypted.</strong> Rankings never touch a server — the page does everything locally, chips open only with the one private key, and the results code carries only the scores of the splits it shows — never individual rankings, never a pairwise table.</span>
       </div>
     </div>
   </section>
@@ -655,7 +655,7 @@ Paulo</textarea>
   <section class="screen" id="sc-results" hidden>
     <div class="panel">
       <h2>See the splits</h2>
-      <p class="sub">Paste the results code from the group chat. It carries how strongly each pair pulled together — never an individual ballot, ever.</p>
+      <p class="sub">Paste the results code from the group chat. It carries only the scores of the published splits — never an individual ballot, never a pairwise table.</p>
       <div class="field">
         <label for="rcin">Results code</label>
         <textarea id="rcin" rows="7" spellcheck="false" placeholder="H44R1-…"></textarea>
@@ -674,7 +674,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-10h</span>
+      <span>House Sort · build 2026-11-11a</span>
     </div>
   </footer>
 </div>
@@ -1753,44 +1753,77 @@ $("btn-reveal").onclick=async ()=>{
     const w=weightsFromBallots(ballots,n);
     const parts=enumeratePartitions(n, pack.layout) ?? samplePartitions(n, pack.layout);
     const top=bestOf(parts, w, n, 3);
+    const alts=neighbourLayouts(pack.layout).map(layout=>{
+      const p=enumeratePartitions(n, layout) ?? samplePartitions(n, layout);
+      return { layout, best:bestOf(p, w, n, 1)[0] };
+    });
     lastResults={ roster:pack.roster.slice(), layout:pack.layout.slice(), w };
-    renderRevealResults($("results"), lastResults, top);
+    renderRevealResults($("results"), lastResults, top, alts);
   }catch(e){
     err.textContent=e.message; err.classList.add("show");
   }
 };
-function renderRevealResults(box, res, top){
+function renderRevealResults(box, res, top, alts=[]){
   box.innerHTML=""; box.hidden=false;
   const head=document.createElement("div");
   head.innerHTML=`<h2>The fairest splits for ${fmtLayout(res.layout)}</h2>
     <p class="sub">Ranked by the unhappiest household member first — nobody's parked as collateral. Post the results code, not the scores.</p>`;
   box.appendChild(head);
   renderTopCards(el => box.appendChild(el), res, top);
+  const warn = res.layout.some(sz=>sz<3)
+    ? " This layout includes a 2-bed house — its house average is one pair's pull, so treat the posted scores with that in mind." : "";
+  const altNote = alts.length
+    ? ` The code also carries the best split for each one-bed shift with every house holding 3+: ${alts.map(a=>fmtLayout(a.layout)).join(", ")}.`
+    : " This shape has no one-bed shift that keeps every house at 3+ beds, so no alternatives are included.";
   const wrap=document.createElement("div"); wrap.className="field";
   wrap.innerHTML=`<label for="rcout">Results code for the group chat — opens for everyone, needs no key</label>
     <textarea id="rcout" rows="5" readonly spellcheck="false"></textarea>
-    <p class="hint">Contains only the roster, the layout and how strongly pairs of friends pulled together — no individual rankings, ever.</p>`;
+    <p class="hint">Contains the roster, the layout and the scores of the splits it shows.${altNote} The pairwise table and every individual ballot stay on this machine — nobody can mine the code for who ranked whom.${warn}</p>`;
   const acts=document.createElement("div"); acts.className="actions";
   const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy results code";
-  const rc=packJSON(resultsPayload(res), RESULTS_PREFIX);
+  const rc=packJSON(resultsPayload(res, top, alts), RESULTS_PREFIX);
   wrap.querySelector("textarea").value=rc;
   cb.onclick=()=>copyText(rc,"Results code copied — paste it in the chat");
-  const play=document.createElement("button"); play.type="button"; play.className="btn"; play.textContent="Try other layouts";
+  const play=document.createElement("button"); play.type="button"; play.className="btn"; play.textContent="Open the viewer";
   play.onclick=()=>{ $("rcin").value=rc; openViewer(rc); };
   acts.append(cb,play);
   wrap.appendChild(acts);
   box.appendChild(wrap);
   box.scrollIntoView({behavior:"smooth", block:"start"});
 }
-function resultsPayload(res){
-  return { v:1, roster:res.roster, layout:res.layout, w:res.w };
+/* a ±1 neighbour layout is publishable only if every house holds ≥3 beds —
+   a 2-person house's "average" is a single pair's pull, far too revealing */
+function neighbourLayouts(layout){
+  const seen=new Set(), out=[];
+  const base=layout.slice().sort((a,b)=>b-a).join("+");
+  for(let from=0;from<layout.length;from++) for(let to=0;to<layout.length;to++){
+    if(from===to) continue;
+    const l=layout.slice(); l[from]--; l[to]++;
+    if(l.some(sz=>sz<3)) continue;
+    const key=l.slice().sort((a,b)=>b-a).join("+");
+    if(key===base || seen.has(key)) continue;
+    seen.add(key); out.push(l);
+  }
+  return out;
 }
-/* top-3 cards used by reveal + viewer */
-function renderTopCards(append, res, top, boxGetter){
+function packOption(o){
+  return { houses:o.houses, hpc:o.hpc, even:o.even, weak:o.weak };
+}
+/* v2 results payload: the pairwise matrix never leaves the organiser's machine.
+   The code carries only the scores of the splits it shows — the base layout's top
+   three, plus the best split for each publishable one-bed-shift neighbour. */
+function resultsPayload(res, top, alts){
+  return { v:2, roster:res.roster, layout:res.layout,
+    options: top.map(packOption),
+    alts: alts.map(a=>({ layout:a.layout, best:{ houses:a.best.houses, hpc:a.best.hpc, even:a.best.even } })) };
+}
+/* cards used by reveal + viewer; labelFn overrides "Option n" */
+function renderTopCards(append, res, top, labelFn){
   top.forEach((op,idx)=>{
+    const label=labelFn ? labelFn(idx) : `Option ${idx+1}`;
     const card=document.createElement("div"); card.className="opt";
-    card.innerHTML=`<div class="head"><span class="tag">Option ${idx+1}</span>
-      <span class="fair">evenness ${op.even}% · weakest link ${op.weak}%</span></div>
+    card.innerHTML=`<div class="head"><span class="tag">${label}</span>
+      <span class="fair">evenness ${op.even}%${op.weak==null?"":` · weakest link ${op.weak}%`}</span></div>
       <div class="optstreet"><div class="street ground"></div></div>`;
     append(card);
     const street=card.querySelector(".street");
@@ -1799,7 +1832,8 @@ function renderTopCards(append, res, top, boxGetter){
 }
 
 /* ═════════ results viewer ═════════ */
-const viewer={ n:0, roster:[], w:null, layout:[], setLayout(l){ viewer.layout=l; viewerRender(false); } };
+const viewer={ n:0, roster:[], w:null, layout:[], options:[], alts:[],
+  setLayout(l){ viewer.layout=l; viewerRender(false); } };
 
 function resetViewer(){ $("rcin").value=""; $("res-err").classList.remove("show"); $("resview").hidden=true; }
 
@@ -1814,6 +1848,8 @@ function openViewer(code){
   let res;
   try{ res=unpackJSON(code, RESULTS_PREFIX); }
   catch{ throw new Error("damaged — copy the whole code again from the chat"); }
+  if(res.v===2) return openViewerScores(res);
+  /* legacy v1 codes carry the pairwise matrix — only they offer the live playground */
   if(res.v!==1 || !Array.isArray(res.roster) || !Array.isArray(res.layout) || !Array.isArray(res.w))
     throw new Error("unexpected shape");
   const n=res.roster.length;
@@ -1833,7 +1869,82 @@ function openViewer(code){
   $("resview").hidden=false;
   $("resview").scrollIntoView({behavior:"smooth", block:"start"});
 }
+/* v2 results codes carry only published split scores — display them read-only */
+function openViewerScores(res){
+  const n=res.roster.length;
+  const badShape=()=>{ throw new Error("unexpected shape"); };
+  if(!Array.isArray(res.roster) || n<4 || new Set(res.roster.map(x=>String(x).toLowerCase())).size!==n
+     || !Array.isArray(res.layout)) badShape();
+  if(res.layout.length<2 || res.layout.reduce((a,b)=>a+b,0)!==n || res.layout.some(sz=>sz<1)) throw new Error("bad layout");
+  const validOpt=(o)=> o && Array.isArray(o.houses) && Array.isArray(o.hpc) && o.houses.length===o.hpc.length
+    && Number.isInteger(o.even) && o.even>=0 && o.even<=100
+    && (o.weak==null || (Number.isInteger(o.weak) && o.weak>=0 && o.weak<=100))
+    && o.houses.every(h=>Array.isArray(h) && h.length>0 && h.every(i=>Number.isInteger(i) && i>=0 && i<n));
+  const fullCover=(o)=>{ const c=new Set(); o.houses.forEach(h=>h.forEach(i=>c.add(i))); return c.size===n; };
+  if(!Array.isArray(res.options) || !res.options.length || !res.options.every(o=>validOpt(o)&&fullCover(o)))
+    throw new Error("bad splits");
+  if(!Array.isArray(res.alts)) throw new Error("bad alternatives");
+  for(const a of res.alts){
+    if(!Array.isArray(a.layout) || a.layout.reduce((x,y)=>x+y,0)!==n || a.layout.some(sz=>sz<3)
+       || !validOpt(a.best) || !fullCover(a.best)) throw new Error("bad alternative");
+  }
+  assignHues(res.roster);
+  viewer.n=n; viewer.roster=res.roster.slice(); viewer.w=null;
+  viewer.layout=res.layout.slice();
+  viewer.options=res.options; viewer.alts=res.alts;
+  $("res-err").classList.remove("show");
+  viewerRender(true);
+  $("resview").hidden=false;
+  $("resview").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function viewerRenderScores(){
+  const box=$("resview");
+  box.innerHTML=`
+    <div id="vp-cards"></div>
+    <div id="vp-alts"></div>
+    <div id="vp-copyrow"></div>`;
+  const cards=box.querySelector("#vp-cards");
+  const head=document.createElement("div");
+  head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
+    <p class="sub">Ranked by the unhappiest household member first.</p>`;
+  cards.appendChild(head);
+  renderTopCards(c=>cards.appendChild(c), viewer, viewer.options);
+
+  const altBox=box.querySelector("#vp-alts");
+  if(viewer.alts.length){
+    const h=document.createElement("h3"); h.style.marginTop="26px"; h.textContent="Shift a bed between houses";
+    const p=document.createElement("p"); p.className="sub";
+    p.textContent="Pre-computed from the real ballots when the results were made — one bed moved between houses. Only shapes where every house holds 3+ beds are shared, so no single pair's pull is ever published.";
+    altBox.append(h,p);
+    viewer.alts.forEach(a=>{
+      const lab=document.createElement("div"); lab.style.marginTop="18px";
+      lab.innerHTML=`<h3 style="font-size:15.5px">Best split for ${fmtLayout(a.layout)}</h3>`;
+      altBox.appendChild(lab);
+      renderTopCards(c=>altBox.appendChild(c), viewer, [a.best], ()=>"Best split");
+    });
+  }else{
+    const p=document.createElement("p"); p.className="sub"; p.style.marginTop="26px";
+    p.textContent="No one-bed shifts are shared for this shape — every neighbouring layout would put fewer than 3 people in a house, and a 2-person house's score is one pair's pull.";
+    altBox.appendChild(p);
+  }
+
+  const copyRow=box.querySelector("#vp-copyrow");
+  const best=viewer.options[0];
+  const text=`House Sort — best split for ${fmtLayout(viewer.layout)}\n` + best.houses.map((m,i)=>`House ${i+1}: ${m.map(ix=>viewer.roster[ix]).join(", ")}`).join("\n");
+  const wrap=document.createElement("div"); wrap.className="field";
+  wrap.innerHTML=`<label for="vpcopy">Groupings for the chat</label>
+    <textarea id="vpcopy" rows="4" readonly spellcheck="false"></textarea>`;
+  wrap.querySelector("textarea").value=text;
+  const acts=document.createElement("div"); acts.className="actions";
+  const cb=document.createElement("button"); cb.type="button"; cb.className="btn primary"; cb.textContent="Copy groupings";
+  cb.onclick=()=>copyText(text,"Copied — paste the groupings in the chat");
+  acts.appendChild(cb); wrap.appendChild(acts);
+  copyRow.appendChild(wrap);
+
+  setTimeout(()=>document.querySelectorAll("#resview .bar i").forEach(i=>{ i.style.width=i.style.getPropertyValue("--w"); }),80);
+}
 function viewerRender(animate){
+  if(viewer.w==null) return viewerRenderScores();
   const box=$("resview");
   if(box.dataset.ready!=="1"){
     box.innerHTML=`
@@ -1853,7 +1964,7 @@ function viewerRender(animate){
   head.innerHTML=`<h2 style="font-size:19px">Best splits for ${fmtLayout(viewer.layout)}</h2>
     <p class="sub">Ranked by the unhappiest household member first.</p>`;
   cards.innerHTML=""; cards.appendChild(head);
-  renderTopCards(c=>cards.appendChild(c), viewer, top, ()=>box);
+  renderTopCards(c=>cards.appendChild(c), viewer, top);
 
   // playground: option 1 as the standing arrangement
   const vb=$("vp-builder");

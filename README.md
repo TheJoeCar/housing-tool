@@ -32,10 +32,16 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
    *I'm running the vote* shows a **Decode chips & reveal** shortcut at the top (the same
    link sits under *See the splits*), and that screen needs only the key file, your
    passphrase and the pasted chips.
+   Above the results code you choose what gets published: **Include the scores** (house
+   averages, evenness, weakest link) or leave them out — the labels stay but every figure
+   shows as `***`, and the code then carries no numbers at all. **Other combinations** adds
+   up to 8 further splits of the same houses, which never carry scores; the figures on those
+   stay masked so a long list can't be used to infer individual votes.
 5. Post the **results code** (`H44R1-…`) in the chat. It contains only the roster, the layout
-   and the scores of the splits it shows — the main layout's top three, plus the best split for
-   each one-bed shift where every house keeps 3+ beds. No ballots and no pairwise table ever
-   leave the organiser's machine.
+   and the splits it shows — the main layout's top three, plus the best split for each one-bed
+   shift where every house keeps 3+ beds, plus any extra combinations you added. Scores are
+   included only if you left them on. No ballots and no pairwise table ever leave the
+   organiser's machine.
 
 **Each friend:**
 
@@ -60,9 +66,11 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
 - Every screen: the House Sort logo in the header takes you back to the start.
 - The viewer shows the published splits read-only: the main layout's top three, plus a
   **shift a bed between houses** section with the pre-computed best split for each neighbouring
-  shape (every house 3+ beds). Only what's in the code is shown — nothing is recomputed,
-  because the code carries no pairwise table. Results codes from before this change no longer
-  open — the organiser can reveal again from the same key file and chips.
+  shape (every house 3+ beds), plus an **Other combinations** section when the organiser added
+  any. Only what's in the code is shown — nothing is recomputed, because the code carries no
+  pairwise table. Scores appear only if the organiser published them; otherwise every figure
+  reads `***`. Results codes from before this change no longer open — the organiser can reveal
+  again from the same key file and chips.
 - The scores are explained in one line on the results page itself (**What the scores mean**),
   and a plain-language **How it works** page — linked from the front page and from every
   results page — explains the maths, the ranking and the privacy model in full.

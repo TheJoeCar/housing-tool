@@ -34,7 +34,7 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
    passphrase and the pasted chips.
    Above the results code you choose what gets published: **Include the scores** (house
    averages, evenness, weakest link) or leave them out — the labels stay but every figure
-   shows as `***`, and the code then carries no numbers at all. **Other combinations** adds
+   is withheld, and the code then carries no numbers at all. **Other combinations** adds
    up to 8 further splits of the same houses, which never carry scores; the figures on those
    stay masked so a long list can't be used to infer individual votes.
 5. Post the **results code** (`H44R1-…`) in the chat. It contains only the roster, the layout
@@ -69,7 +69,7 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
   shape (every house 3+ beds), plus an **Other combinations** section when the organiser added
   any. Only what's in the code is shown — nothing is recomputed, because the code carries no
   pairwise table. Scores appear only if the organiser published them; otherwise every figure
-  reads `***`. Results codes from before this change no longer open — the organiser can reveal
+  is withheld. Results codes from before this change no longer open — the organiser can reveal
   again from the same key file and chips.
 - The scores are explained in one line on the results page itself (**What the scores mean**),
   and a plain-language **How it works** page — linked from the front page and from every

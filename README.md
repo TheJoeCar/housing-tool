@@ -28,6 +28,10 @@ Works for **any roster of 4–20 people** and **any layout of 2–6 houses** wit
      passphrase. It was never stored in the browser. Keep it somewhere a screenshot isn't.
 4. When everyone's chips are in the chat: paste the chips + key file + passphrase →
    *Reveal arrangements*.
+   **Coming back later?** Nothing from the setup needs to be redone. On a fresh page load,
+   *I'm running the vote* shows a **Decode chips & reveal** shortcut at the top (the same
+   link sits under *See the splits*), and that screen needs only the key file, your
+   passphrase and the pasted chips.
 5. Post the **results code** (`H44R1-…`) in the chat. It contains only the roster, the layout
    and the scores of the splits it shows — the main layout's top three, plus the best split for
    each one-bed shift where every house keeps 3+ beds. No ballots and no pairwise table ever

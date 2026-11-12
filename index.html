@@ -190,6 +190,23 @@
   .btn svg{flex:none}
   .actions{display:flex; gap:11px; flex-wrap:wrap; margin-top:22px}
 
+  /* ── returning organiser ─────────────────────────────── */
+  .resume{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    margin-top:24px; padding:16px 18px;
+    background:var(--accent-soft); border:1px solid #D6E4DB; border-radius:var(--radius);
+  }
+  .resume .rtext{flex:1; min-width:220px}
+  .resume b{display:block; font-size:14.5px; color:var(--ink)}
+  .resume .rtext span{display:block; margin-top:3px; font-size:13px; color:#41604E}
+  .resume .btn{flex:none; background:var(--surface); border-color:#C6D9CE; color:var(--accent)}
+  .resume .btn:hover{background:#fff}
+  .resume[hidden]{display:none}
+  @media (max-width:700px){
+    .resume{padding:15px; align-items:stretch; gap:12px}
+    .resume .btn{width:100%}
+  }
+
   /* ── invite codes ───────────────────────────────────── */
   .codes{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden}
   .codes .row{display:flex; align-items:center; gap:12px; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface)}
@@ -540,6 +557,13 @@
 
   <!-- ═══ setup ════════════════════════════════════════════ -->
   <section class="screen" id="sc-setup" hidden>
+    <div class="resume" id="resume-setup">
+      <div class="rtext">
+        <b>Already set up this vote?</b>
+        <span>If you saved the key file and have everyone's chips, skip all of this — decode them and reveal the splits.</span>
+      </div>
+      <button type="button" class="btn" id="btn-goto-reveal">Decode chips &amp; reveal</button>
+    </div>
     <div class="panel">
       <h2>1 · The roster</h2>
       <p class="sub">Add everyone who's splitting up — names are public, votes never are.</p>
@@ -753,6 +777,7 @@ Paulo</textarea>
         </button>
       </div>
       <p class="err" id="res-err"></p>
+      <p class="hint" style="margin-top:16px">Running the vote and coming back later? <button type="button" class="morelink" id="btn-results-reveal">Decode the chips and reveal the splits</button></p>
     </div>
     <div class="panel" id="resview" hidden></div>
   </section>
@@ -820,7 +845,7 @@ Paulo</textarea>
   <footer>
     <div class="line">
       <span>Runs entirely in your browser — nothing is uploaded, tracked, or stored.</span>
-      <span>House Sort · build 2026-11-11e</span>
+      <span>House Sort · build 2026-11-12a</span>
     </div>
   </footer>
 </div>
@@ -923,6 +948,10 @@ function scoreLegend(){
   return d;
 }
 $("btn-done-setup").onclick = () => { resetReveal(); show("sc-reveal"); };
+/* the reveal screen needs nothing from setup: key file + passphrase + chips */
+function goReveal(){ resetReveal(); show("sc-reveal"); }
+$("btn-goto-reveal").onclick = goReveal;
+$("btn-results-reveal").onclick = goReveal;
 
 /* the logo goes back to the front page; a freshly minted but unsaved key needs one confirm */
 let keySaved = false;
@@ -1420,6 +1449,7 @@ function initSetup(){
   $("roster-in").value="";
   syncTieUI();
   keyJson=null; $("keyout").hidden=true;
+  const resume=$("resume-setup"); if(resume) resume.hidden=false;
   $("pp1").value="";
   $("gen-err").classList.remove("show");
 }
@@ -1451,6 +1481,7 @@ $("btn-gen").onclick=async ()=>{
       row.appendChild(dm); list.appendChild(row);
     });
     $("keyout").hidden=false;
+    const resume=$("resume-setup"); if(resume) resume.hidden=true;
     $("keyout").scrollIntoView({behavior:"smooth", block:"start"});
   }catch(e){
     err.textContent="Key generation failed: "+e.message; err.classList.add("show");
